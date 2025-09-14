@@ -16,28 +16,30 @@ local common = require("neo-tree.sources.common.components")
 local M = {}
 
 M.name = function(config, node, state)
-  local highlight = config.highlight or highlights.FILE_NAME_OPENED
-  local name = node.name
-  if node.type == "directory" then
-    if node:get_depth() == 1 then
-      highlight = highlights.ROOT_NAME
-      name = state.zk and state.zk.query.desc
-    else
-      highlight = highlights.DIRECTORY_NAME
-    end
-  else
-    if node.extra and node.extra.title then
-      name = node.extra.title
-    end
-    local git_status = state.components.git_status({}, node, state)
-    if git_status and git_status.highlight then
-      highlight = git_status.highlight
-    end
-  end
-  return {
-    text = name,
-    highlight = highlight,
-  }
+	local highlight = config.highlight or highlights.FILE_NAME_OPENED
+	local name = node.name
+	if node.type == "directory" then
+		if node:get_depth() == 1 then
+			highlight = highlights.ROOT_NAME
+			name = state.zk and state.zk.query.desc
+		else
+			highlight = highlights.DIRECTORY_NAME
+		end
+	else
+		if node.extra and node.extra.title then
+			name = node.extra.title
+		end
+		local git_status = state.components.git_status({}, node, state)
+		if git_status and git_status.highlight then
+			highlight = git_status.highlight
+		end
+	end
+	return {
+		text = name,
+		highlight = highlight,
+	}
 end
+
+-- TODO: Add current_filter() from filesystem source
 
 return vim.tbl_deep_extend("force", common, M)

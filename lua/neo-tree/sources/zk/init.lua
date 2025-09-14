@@ -119,6 +119,83 @@ M.follow = function(callback, force_show)
 	end, 100, utils.debounce_strategy.CALL_LAST_ONLY)
 end
 
+local fs_stat = (vim.uv or vim.loop).fs_stat
+
+---@param state neotree.sources.filesystem.State
+---@param path string?
+---@param path_to_reveal string?
+---@param callback function?
+M._navigate_internal = function(state, path, path_to_reveal, callback, async)
+	log.trace("navigate_internal", state.current_position, path, path_to_reveal)
+	state.dirty = false
+	local is_search = utils.truthy(state.search_pattern)
+	local path_changed = false
+	if not path and not state.bind_to_cwd then
+		path = state.path
+	end
+	if path == nil then
+		log.debug("navigate_internal: path is nil, using cwd")
+		path = manager.get_cwd(state)
+	end
+	path = utils.normalize_path(path)
+
+	-- if path doesn't exist, navigate upwards until it does
+	local orig_path = path
+	local backed_out = false
+	while not fs_stat(path) do
+		log.debug(("navigate_internal: path %s didn't exist, going up a directory"):format(path))
+		backed_out = true
+		local parent, _ = utils.split_path(path)
+		if not parent then
+			break
+		end
+		path = parent
+	end
+
+	if backed_out then
+		log.warn(("Root path %s doesn't exist, backing out to %s"):format(orig_path, path))
+	end
+
+	if path ~= state.path then
+		log.debug("navigate_internal: path changed from ", state.path, " to ", path)
+		state.path = path
+		path_changed = true
+	end
+
+	if path_to_reveal then
+		renderer.position.set(state, path_to_reveal)
+		log.debug("navigate_internal: in path_to_reveal, state.position=", state.position.node_id)
+		fs_scan.get_items(state, nil, path_to_reveal, callback)
+	else
+		local is_current = state.current_position == "current"
+		local follow_file = state.follow_current_file.enabled
+			and not is_search
+			and not is_current
+			and manager.get_path_to_reveal()
+		local handled = false
+		if utils.truthy(follow_file) then
+			handled = follow_internal(callback, true, async)
+		end
+		if not handled then
+			local success, msg = pcall(renderer.position.save, state)
+			if success then
+				log.trace("navigate_internal: position saved")
+			else
+				log.trace("navigate_internal: FAILED to save position: ", msg)
+			end
+			fs_scan.get_items(state, nil, nil, callback, async)
+		end
+	end
+
+	if path_changed and state.bind_to_cwd then
+		manager.set_cwd(state)
+	end
+	local config = require("neo-tree").config
+	if config.enable_git_status and not is_search and config.git_status_async then
+		git.status_async(state.path, state.git_base, config.git_status_async_options)
+	end
+end
+
 ---Navigate to the given path.
 ---@param path string Path to navigate to. If empty, will navigate to the cwd.
 M.navigate = function(state, path, path_to_reveal, callback, async)
@@ -130,9 +207,9 @@ M.navigate = function(state, path, path_to_reveal, callback, async)
 	items.get_zk(state, path)
 end
 
----Configures the plugin, should be called before the plugin is used.
----@param config neotree.Config.Filesystem Configuration table containing any keys that the user wants to change from the defaults. May be empty to accept default values.
----@param global_config neotree.Config.Base
+-- ---Configures the plugin, should be called before the plugin is used.
+-- ---@param config neotree.Config.Filesystem Configuration table containing any keys that the user wants to change from the defaults. May be empty to accept default values.
+-- ---@param global_config neotree.Config.Base
 M.setup = function(config, global_config)
 	config.filtered_items = config.filtered_items or {}
 	config.enable_git_status = config.enable_git_status or global_config.enable_git_status
@@ -260,17 +337,6 @@ M.setup = function(config, global_config)
 		end
 	end
 
-	-- Configure event handler for follow_current_file option
-	-- if config.follow_current_file then -- TODO: Delete after check
-	-- 	manager.subscribe(M.name, {
-	-- 		event = events.VIM_BUFFER_ENTER,
-	-- 		handler = M.follow,
-	-- 	})
-	-- 	manager.subscribe(M.name, {
-	-- 		event = events.VIM_TERMINAL_ENTER,
-	-- 		handler = M.follow,
-	-- 	})
-	-- end
 	-- Configure event handler for follow_current_file option
 	if config.follow_current_file.enabled then
 		manager.subscribe(M.name, {
