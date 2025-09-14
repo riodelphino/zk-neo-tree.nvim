@@ -1,6 +1,6 @@
 --This file should contain all commands meant to be used by mappings.
 local vim = vim
-local loop = vim.loop
+local uv = vim.uv or vim.loop
 local renderer = require("neo-tree.ui.renderer")
 local cc = require("neo-tree.sources.common.commands")
 local utils = require("neo-tree.utils")
@@ -80,12 +80,12 @@ end
 local function mkdir_p(path)
 	local create_all_as_folders
 	function create_all_as_folders(in_path)
-		if not loop.fs_stat(in_path) then
+		if not uv.fs_stat(in_path) then
 			local parent, _ = utils.split_path(in_path)
 			if parent then
 				create_all_as_folders(parent)
 			end
-			loop.fs_mkdir(in_path, 493)
+			uv.fs_mkdir(in_path, 493)
 		end
 	end
 
