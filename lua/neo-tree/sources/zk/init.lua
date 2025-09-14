@@ -9,6 +9,8 @@ local items = require("neo-tree.sources.zk.lib.items")
 local events = require("neo-tree.events")
 local log = require("neo-tree.log")
 local manager = require("neo-tree.sources.manager")
+local git = require("neo-tree.git")
+local glob = require("neo-tree.sources.filesystem.lib.globtopattern")
 
 ---@class neotree.sources.filesystem : neotree.Source
 local M = {
@@ -132,6 +134,25 @@ end
 ---@param config neotree.Config.Filesystem Configuration table containing any keys that the user wants to change from the defaults. May be empty to accept default values.
 ---@param global_config neotree.Config.Base
 M.setup = function(config, global_config)
+	config.filtered_items = config.filtered_items or {}
+	config.enable_git_status = config.enable_git_status or global_config.enable_git_status
+
+	for _, key in ipairs({ "hide_by_pattern", "always_show_by_pattern", "never_show_by_pattern" }) do
+		local list = config.filtered_items[key]
+		if type(list) == "table" then
+			for i, pattern in ipairs(list) do
+				list[i] = glob.globtopattern(pattern)
+			end
+		end
+	end
+
+	for _, key in ipairs({ "hide_by_name", "always_show", "never_show" }) do
+		local list = config.filtered_items[key]
+		if type(list) == "table" then
+			config.filtered_items[key] = utils.list_to_dict(list)
+		end
+	end
+
 	--Configure events for before_render
 	if config.before_render then
 		--convert to new event system
@@ -144,6 +165,55 @@ M.setup = function(config, global_config)
 				end
 			end,
 		})
+	elseif global_config.enable_git_status and global_config.git_status_async then
+		manager.subscribe(M.name, {
+			event = events.GIT_STATUS_CHANGED,
+			handler = wrap(manager.git_status_changed),
+		})
+	elseif global_config.enable_git_status then
+		manager.subscribe(M.name, {
+			event = events.BEFORE_RENDER,
+			handler = function(state)
+				local this_state = get_state()
+				if state == this_state then
+					state.git_status_lookup = git.status(state.git_base)
+				end
+			end,
+		})
+	end
+
+	-- Respond to git events from git_status source or Fugitive
+	if global_config.enable_git_status then
+		manager.subscribe(M.name, {
+			event = events.GIT_EVENT,
+			handler = function()
+				manager.refresh(M.name)
+			end,
+		})
+	end
+
+	--Configure event handlers for file changes
+	if config.use_libuv_file_watcher then
+		manager.subscribe(M.name, {
+			event = events.FS_EVENT,
+			handler = wrap(manager.refresh),
+		})
+	else
+		require("neo-tree.sources.filesystem.lib.fs_watch").unwatch_all()
+		if global_config.enable_refresh_on_write then
+			manager.subscribe(M.name, {
+				event = events.VIM_BUFFER_CHANGED,
+				handler = function(arg)
+					local afile = arg.afile or ""
+					if utils.is_real_file(afile) then
+						log.trace("refreshing due to vim_buffer_changed event: ", afile)
+						manager.refresh("filesystem")
+					else
+						log.trace("Ignoring vim_buffer_changed event for non-file: ", afile)
+					end
+				end,
+			})
+		end
 	end
 
 	if global_config.enable_refresh_on_write then
@@ -157,13 +227,15 @@ M.setup = function(config, global_config)
 		})
 	end
 
+	--Configure event handlers for cwd changes
 	if config.bind_to_cwd then
 		manager.subscribe(M.name, {
 			event = events.VIM_DIR_CHANGED,
-			handler = wrap(manager.refresh),
+			handler = wrap(manager.dir_changed),
 		})
 	end
 
+	--Configure event handlers for lsp diagnostic updates
 	if global_config.enable_diagnostics then
 		manager.subscribe(M.name, {
 			event = events.VIM_DIAGNOSTIC_CHANGED,
@@ -175,19 +247,39 @@ M.setup = function(config, global_config)
 	if global_config.enable_modified_markers then
 		manager.subscribe(M.name, {
 			event = events.VIM_BUFFER_MODIFIED_SET,
-			handler = wrap(manager.modified_buffers_changed),
+			handler = wrap(manager.opened_buffers_changed),
 		})
 	end
 
+	if global_config.enable_opened_markers then
+		for _, event in ipairs({ events.VIM_BUFFER_ADDED, events.VIM_BUFFER_DELETED }) do
+			manager.subscribe(M.name, {
+				event = event,
+				handler = wrap(manager.opened_buffers_changed),
+			})
+		end
+	end
+
 	-- Configure event handler for follow_current_file option
-	if config.follow_current_file then
+	-- if config.follow_current_file then -- TODO: Delete after check
+	-- 	manager.subscribe(M.name, {
+	-- 		event = events.VIM_BUFFER_ENTER,
+	-- 		handler = M.follow,
+	-- 	})
+	-- 	manager.subscribe(M.name, {
+	-- 		event = events.VIM_TERMINAL_ENTER,
+	-- 		handler = M.follow,
+	-- 	})
+	-- end
+	-- Configure event handler for follow_current_file option
+	if config.follow_current_file.enabled then
 		manager.subscribe(M.name, {
 			event = events.VIM_BUFFER_ENTER,
-			handler = M.follow,
-		})
-		manager.subscribe(M.name, {
-			event = events.VIM_TERMINAL_ENTER,
-			handler = M.follow,
+			handler = function(args)
+				if utils.is_real_file(args.afile) then
+					M.follow()
+				end
+			end,
 		})
 	end
 end
