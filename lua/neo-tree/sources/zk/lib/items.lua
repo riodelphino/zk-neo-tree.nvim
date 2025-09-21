@@ -42,6 +42,49 @@ local function index_by_path(notes)
 	return tbl
 end
 
+-- function M.scan(state, callback)
+-- 	require("zk.api").list(
+-- 		state.path,
+-- 		vim.tbl_extend("error", { select = { "absPath", "title" } }, state.zk.query.query),
+-- 		function(err, notes)
+-- 			if err then
+-- 				log.error("Error querying notes " .. vim.inspect(err))
+-- 				return
+-- 			end
+-- 			state.notes_cache = index_by_path(notes)
+-- 			local context = file_items.create_context(state)
+-- 			-- Create root folder
+-- 			local root = file_items.create_item(context, state.path, "directory")
+-- 			root.name = vim.fn.fnamemodify(root.path, ":~")
+-- 			root.loaded = false -- FIXME: 修正
+--
+-- 			root.search_pattern = state.search_pattern
+-- 			context.folders[root.path] = root
+--
+-- 			for _, note in pairs(notes) do
+-- 				local success, item = pcall(file_items.create_item, context, note.absPath, "file")
+-- 				if success then
+--                table.insert(root.children, item)
+--             else
+-- 					log.error("Error creating item for " .. note.absPath .. ": " .. item)
+-- 				end
+-- 			end
+--
+-- 			state.default_expanded_nodes = {}
+-- 			for id_, _ in ipairs(context.folders) do
+-- 				table.insert(state.default_expanded_nodes, id_)
+-- 			end
+-- 			file_items.deep_sort(root.children)
+-- 			renderer.show_nodes({ root }, state)
+--
+-- 			state.loading = false
+-- 			if type(callback) == "function" then
+-- 				callback()
+-- 			end
+-- 		end
+-- 	)
+-- end
+
 function M.scan(state, callback)
 	require("zk.api").list(
 		state.path,
@@ -51,8 +94,12 @@ function M.scan(state, callback)
 				log.error("Error querying notes " .. vim.inspect(err))
 				return
 			end
+
+			-- cache
 			state.notes_cache = index_by_path(notes)
+
 			local context = file_items.create_context(state)
+
 			-- Create root folder
 			local root = file_items.create_item(context, state.path, "directory")
 			root.name = vim.fn.fnamemodify(root.path, ":~")
@@ -60,17 +107,45 @@ function M.scan(state, callback)
 			root.search_pattern = state.search_pattern
 			context.folders[root.path] = root
 
+			-- ディレクトリ／ファイルを構築
 			for _, note in pairs(notes) do
+				local parent_path = vim.fn.fnamemodify(note.absPath, ":h")
+
+				-- -- 親ディレクトリノードを作成 or 再利用
+				-- if not context.folders[parent_path] then
+				-- 	local dir_node = file_items.create_item(context, parent_path, "directory")
+				-- 	dir_node.loaded = false
+				-- 	context.folders[parent_path] = dir_node
+				--
+				-- 	-- 親の親を探して children に追加
+				-- 	local grand_parent = context.folders[vim.fn.fnamemodify(parent_path, ":h")] or root
+				-- 	table.insert(grand_parent.children, dir_node)
+				-- end
+				if not context.folders[parent_path] then
+					local dir_node = file_items.create_item(context, parent_path, "directory")
+					dir_node.loaded = false
+					context.folders[parent_path] = dir_node
+					-- table.insert(grand_parent.children, dir_node) -- これを削除
+				end
+
+				-- ファイルノードを作成
 				local success, item = pcall(file_items.create_item, context, note.absPath, "file")
+				-- if success then
+				-- 	table.insert(context.folders[parent_path].children, item)
+				-- else
+				-- 	log.error("Error creating item for " .. note.absPath .. ": " .. item)
+				-- end
 				if not success then
 					log.error("Error creating item for " .. note.absPath .. ": " .. item)
 				end
 			end
 
+			-- 展開デフォルト設定
 			state.default_expanded_nodes = {}
-			for id_, _ in ipairs(context.folders) do
+			for id_, _ in pairs(context.folders) do
 				table.insert(state.default_expanded_nodes, id_)
 			end
+
 			file_items.deep_sort(root.children)
 			renderer.show_nodes({ root }, state)
 
