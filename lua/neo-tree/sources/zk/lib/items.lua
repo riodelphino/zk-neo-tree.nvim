@@ -10,6 +10,8 @@ local default_query = {
 	query = {},
 }
 
+M.notes_cache = {}
+
 ---@param bufnr number?
 ---@return string? path inside a notebook
 local function resolve_notebook_path_from_dir(path, cwd)
@@ -32,6 +34,14 @@ local function resolve_notebook_path_from_dir(path, cwd)
 	return path
 end
 
+local function index_by_path(notes)
+	local tbl = {}
+	for _, note in ipairs(notes) do
+		tbl[note.absPath] = note
+	end
+	return tbl
+end
+
 function M.scan(state, callback)
 	require("zk.api").list(
 		state.path,
@@ -41,6 +51,7 @@ function M.scan(state, callback)
 				log.error("Error querying notes " .. vim.inspect(err))
 				return
 			end
+			state.notes_cache = index_by_path(notes)
 			local context = file_items.create_context(state)
 			-- Create root folder
 			local root = file_items.create_item(context, state.path, "directory")
@@ -51,11 +62,7 @@ function M.scan(state, callback)
 
 			for _, note in pairs(notes) do
 				local success, item = pcall(file_items.create_item, context, note.absPath, "file")
-				if success then
-					item.extra = {
-						title = note.title,
-					}
-				else
+				if not success then
 					log.error("Error creating item for " .. note.absPath .. ": " .. item)
 				end
 			end

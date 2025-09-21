@@ -26,9 +26,7 @@ M.name = function(config, node, state)
 			highlight = highlights.DIRECTORY_NAME
 		end
 	else
-		if node.extra and node.extra.title then
-			name = node.extra.title
-		end
+		name = state.notes_cache[node.path] and state.notes_cache[node.path].title or node.name
 		local git_status = state.components.git_status({}, node, state)
 		if git_status and git_status.highlight then
 			highlight = git_status.highlight
