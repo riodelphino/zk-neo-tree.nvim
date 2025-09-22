@@ -58,14 +58,15 @@ function M.scan(state, callback)
 
 			local context = file_items.create_context(state)
 
-			local root = {
-				id = state.path,
-				name = vim.fn.fnamemodify(state.path, ":~"),
-				path = state.path,
-				type = "directory",
-				children = {},
-				loaded = false,
-			}
+			local root = file_items.create_item(context, state.path, "directory")
+
+			root.id = state.path
+			root.name = vim.fn.fnamemodify(state.path, ":~")
+			-- root.path = state.path
+			-- root.type = "directory"
+			-- root.children = {}
+			root.loaded = true
+			root.search_pattern = state.search_pattern
 			context.folders[root.path] = root
 			-- print("context: " .. vim.inspect(context)) -- TODO: debug code
 
@@ -93,6 +94,11 @@ function M.scan(state, callback)
 			end
 
 			file_items.deep_sort(root.children)
+			root.children = {} -- リセットしてみる
+			log.debug("root.children: " .. vim.inspect(root.children))
+			log.debug("context: " .. vim.inspect(context))
+			log.debug("state: " .. vim.inspect(state))
+
 			renderer.show_nodes({ root }, state)
 
 			state.loading = false
