@@ -43,6 +43,77 @@ local function index_by_path(notes)
 	return tbl
 end
 
+-- ---Sort by YAML Title (fallback to filename)
+-- local function zk_sort_function(state, a, b)
+-- 	-- Directories
+-- 	if a.type == "directory" and b.type ~= "directory" then
+-- 		return true
+-- 	elseif a.type ~= "directory" and b.type == "directory" then
+-- 		return false
+-- 	elseif a.type == "directory" and b.type == "directory" then
+-- 		return a.path < b.path
+-- 	end
+--
+-- 	local a_title = state.notes_cache[a.path] and state.notes_cache[a.path].title or nil
+-- 	local b_title = state.notes_cache[b.path] and state.notes_cache[b.path].title or nil
+--
+-- 	-- Has Title or not
+-- 	if a_title and not b_title then
+-- 		return true
+-- 	elseif not a_title and b_title then
+-- 		return false
+-- 	end
+--
+-- 	-- fallback for Both have Title or Both do not have Title
+-- 	local a_key = a_title or a.name
+-- 	local b_key = b_title or b.name
+--
+-- 	if a_key == b_key then
+-- 		return a.name < b.name
+-- 	end
+-- 	return a_key < b_key
+-- end
+
+-- a, b =
+-- {
+--   base = "zkeu83",
+--   contains_reveal_target = false,
+--   ext = "md",
+--   exts = "md",
+--   id = "/Users/rio/Projects/terminal/test/zkeu83.md",
+--   is_reveal_target = false,
+--   name = "zkeu83.md",
+--   name_lcase = "zkeu83.md",
+--   parent_path = "/Users/rio/Projects/terminal/test",
+--   path = "/Users/rio/Projects/terminal/test/zkeu83.md",
+--   title = "A",
+--   type = "file"
+-- }
+
+---Sort by YAML Title (fallback to filename)
+local function zk_sort_function(state, a, b)
+	-- print(a.path, " | ", b.path) -- TODO: debug
+	-- Directories
+	if a.type == "directory" and b.type ~= "directory" then
+		return true
+	elseif a.type ~= "directory" and b.type == "directory" then
+		return false
+	elseif a.type == "directory" and b.type == "directory" then
+		return a.name:lower() < b.name:lower()
+	end
+
+	-- Has Title or not
+	local a_cache = state.notes_cache[a.path]
+	local b_cache = state.notes_cache[b.path]
+
+	local a_title = a_cache and a_cache.title
+	local b_title = b_cache and b_cache.title
+	local a_key = a_title and vim.fs.joinpath(a.parent_path, a_title) or a.path
+	local b_key = b_title and vim.fs.joinpath(b.parent_path, b_title) or b.path
+
+	return a_key:lower() < b_key:lower()
+end
+
 function M.scan(state, callback)
 	require("zk.api").list(
 		state.path,
@@ -72,7 +143,9 @@ function M.scan(state, callback)
 			-- zk
 			for _, note in pairs(notes) do
 				local success, item = pcall(file_items.create_item, context, note.absPath, "file")
-				if not success then
+				if success then
+					item.title = note.title
+				else
 					log.error("Error creating item for " .. note.absPath .. ": " .. item)
 				end
 			end
@@ -83,12 +156,73 @@ function M.scan(state, callback)
 				table.insert(state.default_expanded_nodes, id_)
 			end
 
-			file_items.deep_sort(root.children)
-			log.debug("root.children: " .. vim.inspect(root.children))
-			log.debug("context: " .. vim.inspect(context))
-			log.debug("state: " .. vim.inspect(state))
+			local function sort_by_yaml_title(a, b)
+				if a.type == "directory" and b.type ~= "directory" then
+					return true
+				elseif a.type ~= "directory" and b.type == "directory" then
+					return false
+				end
+
+				-- print("a.path: " .. a.path)
+				print(vim.inspect(a))
+				-- print(state.notes_cache[a.path] and state.notes_cache[a.path].title or "nashi")
+				local a_title = state.notes_cache[a.path] and state.notes_cache[a.path].title or a.name
+				local b_title = state.notes_cache[b.path] and state.notes_cache[b.path].title or b.name
+				local a_compare = vim.fs.joinpath(a.parent_path, a_title)
+				local b_compare = vim.fs.joinpath(b.parent_path, b_title)
+
+				-- if a_title == b_title then
+				-- 	return a.name < b.name
+				-- end
+				-- return a_title < b_title
+				return a_compare < b_compare
+			end
+			-- TODO: なんでここ？これいる？
+			-- file_items.deep_sort(root.children)
+
+			-- TODO: state.sort_function_override にセットすると、フィルタクリア時にクリアされちゃうよね？
+			-- state.sort_function_override = function(a, b)
+			-- 	-- YAML title → filename の順
+			-- 	-- print("sort_function_override is called")
+			-- 	if a.type == "directory" and b.type ~= "directory" then
+			-- 		return true
+			-- 	elseif a.type ~= "directory" and b.type == "directory" then
+			-- 		return false
+			-- 	end
+			-- 	local a_title = a.title or a.name
+			-- 	local b_title = b.title or b.name
+			-- 	if a_title == b_title then
+			-- 		return a.name < b.name
+			-- 	end
+			-- 	return a_title < b_title
+			-- end
+
+			-- file_items.deep_sort(root.children, M.sort_by_yaml_title(state))
+			-- file_items.deep_sort(root.children, sort_by_yaml_title)
+			-- file_items.deep_sort(root.children)
+			-- context.deep_sort(root.children)
+			-- print("after deep_sort " .. vim.inspect(root.children))
+			-- file_items.advanced_sort(root.children, state) -- TODO: 最後まで使ってた
+
+			-- table.sort(root.children, function(a, b)
+			-- 	return M.sort_by_yaml_title(state, a, b)
+			-- end)
+
+			state.zk_sort_function = function(a, b) -- FIX: Using closure (Can use sort_fielder?)
+				zk_sort_function(state, a, b)
+			end
+			-- file_items.deep_sort(root.children, function(a, b)
+			-- 	zk_sort_function(state, a, b)
+			-- end)
+			file_items.deep_sort(root.children, state.zk_sort_function, nil, 1) -- FIX: DOES IT WORK?
+
+			-- file_items.advanced_sort(root.children, state) -- TODO: やっぱ override を設定した場合に備えて、要るんじゃね？
 
 			renderer.show_nodes({ root }, state)
+
+			print("after renderer.show_nodes: root.children: " .. vim.inspect(root.children)) -- TODO: debug code
+			-- print("state.sort_field_provider: " .. vim.inspect(state.sort_field_provider))
+			-- print("state.tree: " .. vim.inspect(state.tree))
 
 			state.loading = false
 			if type(callback) == "function" then
