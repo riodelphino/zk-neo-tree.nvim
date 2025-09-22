@@ -15,25 +15,80 @@ local common = require("neo-tree.sources.common.components")
 
 local M = {}
 
+M.filtered_by = common.filtered_by -- TODO: Avoid error on next M.name. Add M.filtered_by before M.name
+
 M.name = function(config, node, state)
-	local highlight = config.highlight or highlights.FILE_NAME_OPENED
-	local name = node.name
+	-- local highlight = config.highlight or highlights.FILE_NAME
+	-- local text = node.name
+	-- if node.type == "directory" then
+	-- 	if node:get_depth() == 1 then
+	-- 		highlight = highlights.ROOT_NAME
+	-- 		text = state.zk and state.zk.query.desc
+	-- 	else
+	-- 		highlight = highlights.DIRECTORY_NAME
+	-- 	end
+	-- else
+	-- 	text = state.notes_cache[node.path] and state.notes_cache[node.path].title or node.name
+	-- 	local git_status = state.components.git_status({}, node, state)
+	-- 	if git_status and git_status.highlight then
+	-- 		highlight = git_status.highlight
+	-- 	end
+	-- end
+	local highlight = config.highlight or highlights.FILE_NAME
+	local text = node.name
+
 	if node.type == "directory" then
-		if node:get_depth() == 1 then
-			highlight = highlights.ROOT_NAME
-			name = state.zk and state.zk.query.desc
-		else
-			highlight = highlights.DIRECTORY_NAME
-		end
-	else
-		name = state.notes_cache[node.path] and state.notes_cache[node.path].title or node.name
-		local git_status = state.components.git_status({}, node, state)
-		if git_status and git_status.highlight then
-			highlight = git_status.highlight
+		highlight = highlights.DIRECTORY_NAME
+		if config.trailing_slash and text ~= "/" then
+			text = text .. "/"
 		end
 	end
+
+	if node:get_depth() == 1 and node.type ~= "message" then
+		highlight = highlights.ROOT_NAME
+		if state.current_position == "current" and state.sort and state.sort.label == "Name" then
+			local icon = state.sort.direction == 1 and "▲" or "▼"
+			text = text .. "  " .. icon
+		end
+	else
+		local filtered_by = M.filtered_by(config, node, state)
+		highlight = filtered_by.highlight or highlight
+		if config.use_git_status_colors then
+			local git_status = state.components.git_status({}, node, state)
+			if git_status and git_status.highlight then
+				highlight = git_status.highlight
+			end
+		end
+	end
+
+	if node.type == "file" then
+		local cached = state.notes_cache and state.notes_cache[node.path]
+		if cached and cached.title then
+			text = cached.title
+		end
+	end
+
+	local hl_opened = config.highlight_opened_files
+	if hl_opened then
+		local opened_buffers = state.opened_buffers or {}
+		if
+			(hl_opened == "all" and opened_buffers[node.path])
+			or (opened_buffers[node.path] and opened_buffers[node.path].loaded)
+		then
+			highlight = highlights.FILE_NAME_OPENED
+		end
+	end
+
+	if type(config.right_padding) == "number" then
+		if config.right_padding > 0 then
+			text = text .. string.rep(" ", config.right_padding)
+		end
+	else
+		text = text
+	end
+
 	return {
-		text = name,
+		text = text,
 		highlight = highlight,
 	}
 end
