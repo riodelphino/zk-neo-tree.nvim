@@ -96,7 +96,7 @@ function M.scan(state, callback)
 
 			root.id = state.path
 			root.name = vim.fn.fnamemodify(state.path, ":~")
-			root.path = state.path -- FIX: Necessarly?
+			root.path = state.path -- FIX: NEEDED?
 			root.type = "directory"
 			root.children = {}
 			root.loaded = true
@@ -106,9 +106,7 @@ function M.scan(state, callback)
 			-- zk
 			for _, note in pairs(notes) do
 				local success, item = pcall(file_items.create_item, context, note.absPath, "file")
-				if success then
-					item.title = note.title -- FIX: Delete if use state.notes_cache in sort
-				else
+				if not success then
 					log.error("Error creating item for " .. note.absPath .. ": " .. item)
 				end
 			end
@@ -119,78 +117,16 @@ function M.scan(state, callback)
 				table.insert(state.default_expanded_nodes, id_)
 			end
 
-			local function sort_by_yaml_title(a, b)
-				if a.type == "directory" and b.type ~= "directory" then
-					return true
-				elseif a.type ~= "directory" and b.type == "directory" then
-					return false
-				end
-
-				-- print("a.path: " .. a.path)
-				print(vim.inspect(a))
-				-- print(state.notes_cache[a.path] and state.notes_cache[a.path].title or "nashi")
-				local a_title = state.notes_cache[a.path] and state.notes_cache[a.path].title or a.name
-				local b_title = state.notes_cache[b.path] and state.notes_cache[b.path].title or b.name
-				local a_compare = vim.fs.joinpath(a.parent_path, a_title)
-				local b_compare = vim.fs.joinpath(b.parent_path, b_title)
-
-				-- if a_title == b_title then
-				-- 	return a.name < b.name
-				-- end
-				-- return a_title < b_title
-				return a_compare < b_compare
-			end
-			-- TODO: なんでここ？これいる？
-			-- file_items.deep_sort(root.children)
-
-			-- TODO: state.sort_function_override にセットすると、フィルタクリア時にクリアされちゃうよね？
-			-- state.sort_function_override = function(a, b)
-			-- 	-- YAML title → filename の順
-			-- 	-- print("sort_function_override is called")
-			-- 	if a.type == "directory" and b.type ~= "directory" then
-			-- 		return true
-			-- 	elseif a.type ~= "directory" and b.type == "directory" then
-			-- 		return false
-			-- 	end
-			-- 	local a_title = a.title or a.name
-			-- 	local b_title = b.title or b.name
-			-- 	if a_title == b_title then
-			-- 		return a.name < b.name
-			-- 	end
-			-- 	return a_title < b_title
-			-- end
-
-			-- file_items.deep_sort(root.children, M.sort_by_yaml_title(state))
-			-- file_items.deep_sort(root.children, sort_by_yaml_title)
-			-- file_items.deep_sort(root.children)
-			-- context.deep_sort(root.children)
-			-- print("after deep_sort " .. vim.inspect(root.children))
-			-- file_items.advanced_sort(root.children, state) -- TODO: 最後まで使ってた
-
-			-- table.sort(root.children, function(a, b)
-			-- 	return M.sort_by_yaml_title(state, a, b)
-			-- end)
-
-			state.zk_sort_function = function(a, b) -- FIX: Using closure (Can use sort_fielder?)
+			state.zk_sort_function = function(a, b)
 				return zk_sort_function(state, a, b)
 			end
 
-			state.sort_function_override = state.zk_sort_function -- これでどうだ？
-			-- file_items.deep_sort(root.children, function(a, b)
-			-- 	zk_sort_function(state, a, b)
-			-- end)
-			file_items.deep_sort(root.children, state.zk_sort_function) -- FIX: DOES IT WORK?
-			-- file_items.advanced_sort(root.children, state) -- TODO: やっぱ override を設定した場合に備えて、要るんじゃね？
+			state.sort_function_override = state.zk_sort_function
 
-			-- file_items.advanced_sort(root.children, state) -- TODO: やっぱ override を設定した場合に備えて、要るんじゃね？
-			-- table.sort(root.children, state.zk_sort_function)
+			file_items.deep_sort(root.children, state.zk_sort_function)
+			-- file_items.advanced_sort(root.children, state) -- FIX: NEEDED?
 
 			renderer.show_nodes({ root }, state)
-			-- renderer.redraw(state) -- 関係なし
-
-			print("after renderer.show_nodes: root.children: " .. vim.inspect(root.children)) -- TODO: debug code
-			-- print("state.sort_field_provider: " .. vim.inspect(state.sort_field_provider))
-			-- print("state.tree: " .. vim.inspect(state.tree))
 
 			state.loading = false
 			if type(callback) == "function" then
