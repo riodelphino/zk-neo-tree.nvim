@@ -11,8 +11,6 @@ local default_query = {
 	query = {},
 }
 
-M.notes_cache = {}
-
 ---@param bufnr number?
 ---@return string? path inside a notebook
 local function resolve_notebook_path_from_dir(path, cwd)
@@ -43,57 +41,9 @@ local function index_by_path(notes)
 	return tbl
 end
 
--- ---Sort by YAML Title (fallback to filename)
--- local function zk_sort_function(state, a, b)
--- 	-- Directories
--- 	if a.type == "directory" and b.type ~= "directory" then
--- 		return true
--- 	elseif a.type ~= "directory" and b.type == "directory" then
--- 		return false
--- 	elseif a.type == "directory" and b.type == "directory" then
--- 		return a.path < b.path
--- 	end
---
--- 	local a_title = state.notes_cache[a.path] and state.notes_cache[a.path].title or nil
--- 	local b_title = state.notes_cache[b.path] and state.notes_cache[b.path].title or nil
---
--- 	-- Has Title or not
--- 	if a_title and not b_title then
--- 		return true
--- 	elseif not a_title and b_title then
--- 		return false
--- 	end
---
--- 	-- fallback for Both have Title or Both do not have Title
--- 	local a_key = a_title or a.name
--- 	local b_key = b_title or b.name
---
--- 	if a_key == b_key then
--- 		return a.name < b.name
--- 	end
--- 	return a_key < b_key
--- end
-
--- a, b =
--- {
---   base = "zkeu83",
---   contains_reveal_target = false,
---   ext = "md",
---   exts = "md",
---   id = "/Users/rio/Projects/terminal/test/zkeu83.md",
---   is_reveal_target = false,
---   name = "zkeu83.md",
---   name_lcase = "zkeu83.md",
---   parent_path = "/Users/rio/Projects/terminal/test",
---   path = "/Users/rio/Projects/terminal/test/zkeu83.md",
---   title = "A",
---   type = "file"
--- }
-
----Sort by YAML Title (fallback to filename)
+---Sort by Directory > Title > No Title
 local function zk_sort_function(state, a, b)
-	-- print(a.path, " | ", b.path) -- TODO: debug
-	-- Directories
+	-- Directories first
 	if a.type == "directory" and b.type ~= "directory" then
 		return true
 	elseif a.type ~= "directory" and b.type == "directory" then
@@ -102,16 +52,29 @@ local function zk_sort_function(state, a, b)
 		return a.name:lower() < b.name:lower()
 	end
 
-	-- Has Title or not
+	-- Both are files
 	local a_cache = state.notes_cache[a.path]
 	local b_cache = state.notes_cache[b.path]
-
 	local a_title = a_cache and a_cache.title
 	local b_title = b_cache and b_cache.title
-	local a_key = a_title and vim.fs.joinpath(a.parent_path, a_title) or a.path
-	local b_key = b_title and vim.fs.joinpath(b.parent_path, b_title) or b.path
 
-	return a_key:lower() < b_key:lower()
+	-- Title group priority
+	if a_title and not b_title then
+		return true
+	elseif not a_title and b_title then
+		return false
+	end
+
+	-- Both have title → sort by title
+	if a_title and b_title then
+		if a_title:lower() == b_title:lower() then
+			return a.name:lower() < b.name:lower()
+		end
+		return a_title:lower() < b_title:lower()
+	end
+
+	-- Both no title → sort by filename
+	return a.name:lower() < b.name:lower()
 end
 
 function M.scan(state, callback)
@@ -133,8 +96,8 @@ function M.scan(state, callback)
 
 			root.id = state.path
 			root.name = vim.fn.fnamemodify(state.path, ":~")
-			-- root.path = state.path -- FIX: Necessarly?
-			-- root.type = "directory"
+			root.path = state.path -- FIX: Necessarly?
+			root.type = "directory"
 			root.children = {}
 			root.loaded = true
 			root.search_pattern = state.search_pattern
@@ -144,7 +107,7 @@ function M.scan(state, callback)
 			for _, note in pairs(notes) do
 				local success, item = pcall(file_items.create_item, context, note.absPath, "file")
 				if success then
-					item.title = note.title
+					item.title = note.title -- FIX: Delete if use state.notes_cache in sort
 				else
 					log.error("Error creating item for " .. note.absPath .. ": " .. item)
 				end
@@ -209,16 +172,21 @@ function M.scan(state, callback)
 			-- end)
 
 			state.zk_sort_function = function(a, b) -- FIX: Using closure (Can use sort_fielder?)
-				zk_sort_function(state, a, b)
+				return zk_sort_function(state, a, b)
 			end
+
+			state.sort_function_override = state.zk_sort_function -- これでどうだ？
 			-- file_items.deep_sort(root.children, function(a, b)
 			-- 	zk_sort_function(state, a, b)
 			-- end)
-			file_items.deep_sort(root.children, state.zk_sort_function, nil, 1) -- FIX: DOES IT WORK?
-
+			file_items.deep_sort(root.children, state.zk_sort_function) -- FIX: DOES IT WORK?
 			-- file_items.advanced_sort(root.children, state) -- TODO: やっぱ override を設定した場合に備えて、要るんじゃね？
 
+			-- file_items.advanced_sort(root.children, state) -- TODO: やっぱ override を設定した場合に備えて、要るんじゃね？
+			-- table.sort(root.children, state.zk_sort_function)
+
 			renderer.show_nodes({ root }, state)
+			-- renderer.redraw(state) -- 関係なし
 
 			print("after renderer.show_nodes: root.children: " .. vim.inspect(root.children)) -- TODO: debug code
 			-- print("state.sort_field_provider: " .. vim.inspect(state.sort_field_provider))
