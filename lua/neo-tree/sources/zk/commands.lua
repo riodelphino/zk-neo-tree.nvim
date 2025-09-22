@@ -6,13 +6,14 @@ local cc = require("neo-tree.sources.common.commands")
 local utils = require("neo-tree.utils")
 local manager = require("neo-tree.sources.manager")
 local log = require("neo-tree.log")
+local fs = require("neo-tree.sources.filesystem")
 local fs_actions = require("neo-tree.sources.filesystem.lib.fs_actions")
+local fs_commands = require("neo-tree.sources.filesystem.commands")
 local scan = require("neo-tree.sources.zk.lib.items").scan
 
 local M = {}
 
 M.name = "zk"
-
 local refresh = utils.wrap(manager.refresh, "zk")
 
 local function format_item(item)
@@ -152,6 +153,7 @@ end
 
 M.refresh = refresh
 
-cc._add_common_commands(M)
+-- cc._add_common_commands(M)
+M = vim.tbl_deep_extend("keep", M, fs_commands) -- Also including 'common.commands'
 
 return M

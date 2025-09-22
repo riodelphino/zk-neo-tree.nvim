@@ -15,25 +15,9 @@ local common = require("neo-tree.sources.common.components")
 
 local M = {}
 
-M.filtered_by = common.filtered_by -- TODO: Avoid error on next M.name. Add M.filtered_by before M.name
+M.filtered_by = common.filtered_by -- INFO: Avoid error on next M.name. Add M.filtered_by before M.name. Is there any other solutions?
 
 M.name = function(config, node, state)
-	-- local highlight = config.highlight or highlights.FILE_NAME
-	-- local text = node.name
-	-- if node.type == "directory" then
-	-- 	if node:get_depth() == 1 then
-	-- 		highlight = highlights.ROOT_NAME
-	-- 		text = state.zk and state.zk.query.desc
-	-- 	else
-	-- 		highlight = highlights.DIRECTORY_NAME
-	-- 	end
-	-- else
-	-- 	text = state.notes_cache[node.path] and state.notes_cache[node.path].title or node.name
-	-- 	local git_status = state.components.git_status({}, node, state)
-	-- 	if git_status and git_status.highlight then
-	-- 		highlight = git_status.highlight
-	-- 	end
-	-- end
 	local highlight = config.highlight or highlights.FILE_NAME
 	local text = node.name
 

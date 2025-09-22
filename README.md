@@ -36,11 +36,19 @@ In your [neo-tree](https://github.com/nvim-neo-tree/neo-tree.nvim) config:
          enabled = true,
       },
       window = {
-        mappings = {
-          ["n"] = "change_query",
-        },
+         mappings = {
+            ['n'] = 'change_query',
+            -- Additional keys from filesystem source -- FIX: TESTING
+            ['H'] = 'toggle_hidden',
+            ['<bs>'] = 'navigate_up',
+            ['.'] = 'set_root',
+            ['f'] = 'filter_on_submit',
+            ['<c-x>'] = 'clear_filter',
+            ['[g'] = 'prev_git_modified',
+            [']g'] = 'next_git_modified',
+         },
       },
-      -- TODO: Need defaults
+      -- FIX: These should be set as defaults (How?)
       filtered_items = {
          visible = false, -- when true, they will just be displayed differently than normal items
          hide_dotfiles = true,

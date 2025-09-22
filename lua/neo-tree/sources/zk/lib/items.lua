@@ -62,21 +62,12 @@ function M.scan(state, callback)
 
 			root.id = state.path
 			root.name = vim.fn.fnamemodify(state.path, ":~")
-			-- root.path = state.path
+			-- root.path = state.path -- FIX: Necessarly?
 			-- root.type = "directory"
-			-- root.children = {}
+			root.children = {}
 			root.loaded = true
 			root.search_pattern = state.search_pattern
 			context.folders[root.path] = root
-			-- print("context: " .. vim.inspect(context)) -- TODO: debug code
-
-			-- ISSUE: Can't open sub directories.
-
-			-- NOTE: Should we scan not only zk files but also .zk dir and .git and so on ?
-
-			-- filesystem
-			-- FIX: When expand the directory, this source has to scan the directory.
-			-- FIX: context.all_items["path"].children = { <Add children nodes here> }
 
 			-- zk
 			for _, note in pairs(notes) do
@@ -88,13 +79,11 @@ function M.scan(state, callback)
 
 			-- Expand default settings
 			state.default_expanded_nodes = {}
-			-- FIX: Set all folders to `context.folders` ?
 			for id_, _ in pairs(context.folders) do
 				table.insert(state.default_expanded_nodes, id_)
 			end
 
 			file_items.deep_sort(root.children)
-			root.children = {} -- リセットしてみる
 			log.debug("root.children: " .. vim.inspect(root.children))
 			log.debug("context: " .. vim.inspect(context))
 			log.debug("state: " .. vim.inspect(state))
