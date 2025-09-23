@@ -111,9 +111,9 @@ function M.scan(state, callback)
 
 			-- Expand default settings
 			state.default_expanded_nodes = {}
-			for id_, _ in pairs(context.folders) do
-				table.insert(state.default_expanded_nodes, id_)
-			end
+			-- for id_, _ in pairs(context.folders) do -- TODO: remove later
+			-- 	table.insert(state.default_expanded_nodes, id_)
+			-- end
 
 			state.zk_sort_function = function(a, b)
 				return zk_sort_function(state, a, b)
