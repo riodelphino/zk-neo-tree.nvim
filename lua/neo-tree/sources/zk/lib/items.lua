@@ -41,15 +41,15 @@ local function index_by_path(notes)
 	return tbl
 end
 
----Sort by Directory > Title > No Title
+---Sort by 1.Directory > 2.Title > 3.filename
 local function zk_sort_function(state, a, b)
-	-- Directories first
+	-- 1. Directories come first
 	if a.type == "directory" and b.type ~= "directory" then
 		return true
 	elseif a.type ~= "directory" and b.type == "directory" then
 		return false
 	elseif a.type == "directory" and b.type == "directory" then
-		return a.name:lower() < b.name:lower()
+		return a.name:lower() < b.name:lower() -- Sort by directory name
 	end
 
 	-- Both are files
@@ -58,23 +58,20 @@ local function zk_sort_function(state, a, b)
 	local a_title = a_cache and a_cache.title
 	local b_title = b_cache and b_cache.title
 
-	-- Title group priority
+	-- 2. Titles come second
 	if a_title and not b_title then
 		return true
 	elseif not a_title and b_title then
 		return false
-	end
-
-	-- Both have title → sort by title
-	if a_title and b_title then
+	elseif a_title and b_title then -- Sort by Title
 		if a_title:lower() == b_title:lower() then
 			return a.name:lower() < b.name:lower()
 		end
 		return a_title:lower() < b_title:lower()
 	end
 
-	-- Both no title → sort by filename
-	return a.name:lower() < b.name:lower()
+	-- 3. Both no title
+	return a.name:lower() < b.name:lower() -- Sort by filename
 end
 
 function M.scan(state, callback)
@@ -99,13 +96,14 @@ function M.scan(state, callback)
 			root.path = state.path -- FIX: NEEDED?
 			root.type = "directory"
 			root.children = {}
-			root.loaded = true
+			root.loaded = false
 			root.search_pattern = state.search_pattern
 			context.folders[root.path] = root
 
 			-- zk
 			for _, note in pairs(notes) do
 				local success, item = pcall(file_items.create_item, context, note.absPath, "file")
+				-- Extra fields (e.g. `item.extra.title = note.title`) are stripped out internally.
 				if not success then
 					log.error("Error creating item for " .. note.absPath .. ": " .. item)
 				end
