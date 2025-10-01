@@ -183,7 +183,33 @@ function M.scan(state, callback)
 			--
 			-- つまり、先に get_items した場合は context の流用は不可能。
 
+			-- DEBUG: プラン1 じゃどうする？
+			--
+			-- fs_scan.lua をコピペでカスタマイズ。
+			--    1. root か state を返すようにする
+			--    2. renderしないで、zk側でするようにする
+
+			-- DEBUG: プラン2 できるかなぁ？ -> 元の関数が他のsourceから使えなくなってしまう -> 上書きではなく、似た別関数を作る感じなら？
+			--
+			-- 1. fs_scan.lua を fs_scan として require し
+			-- 2. fs_scan.関数名 = function() で関数を上書き
+			-- *  関数内から呼び出している local 関数は scope エラーにならんの？
+
+			-- DEBUG: その他のプラン
+			--
+			-- 表示中の root.children を取得する common 関数があるんじゃないか？
+			-- manager に get_state() がある！ -> でもこれは state だけで、children 含まず。state はもともと持ってるから意味ない
+
 			-- print("state: " .. vim.inspect(state))
+			-- local root = state.root
+			-- 	or file_items.create_item(file_items.create_context(state), state.path, "directory")
+			-- print("root: " .. vim.inspect(root))
+			-- print("state: " .. vim.inspect(state))
+
+			-- DEBUG: わかった！
+			--
+			-- get_items() しておくと、自動的に全ファイルが取得された状態で引き継がれる！
+
 			require("zk.api").list(
 				state.path,
 				vim.tbl_extend("error", { select = { "absPath", "title" } }, state.zk.query or {}),
@@ -198,6 +224,10 @@ function M.scan(state, callback)
 
 					local context = file_items.create_context(state)
 					local root = file_items.create_item(context, state.path, "directory")
+
+					-- DEBUG: いったんなし
+					-- root.children = state.tree:get_node(state.path) -- DEBUG: nui の nodes だけどこう受け渡すしか無い。一応動作するっぽい
+
 					root.id = state.path
 					root.name = vim.fn.fnamemodify(state.path, ":~")
 					root.search_pattern = state.search_pattern
@@ -211,10 +241,21 @@ function M.scan(state, callback)
 					for _, note in pairs(notes) do
 						local success, item = pcall(file_items.create_item, context, note.absPath, "file") -- DEBUG: これ、create じゃなくて既存のテーブル修正では？
 						-- Extra fields (e.g. `item.extra.title = note.title`) are stripped out internally.
+						-- print("item = " .. vim.inspect(item)) -- DEBUG:
 						if not success then
 							log.error("Error creating item for " .. note.absPath .. ": " .. item)
 						end
 					end
+					-- print("root = " .. vim.inspect(root)) -- DEBUG:
+					-- -- DEBUG: GPT プランなぜこれ？
+					-- for _, note in pairs(root.children or {}) do
+					-- 	local success, item = pcall(file_items.create_item, context, note.path, "file")
+					-- 	if success and item then
+					-- 		table.insert(root.children, item)
+					-- 	else
+					-- 		log.error("failed to create zk item for " .. note.path)
+					-- 	end
+					-- end
 
 					-- DEBUG: 試しに、create_item で a フォルダを追加してみる。
 					--
@@ -243,7 +284,10 @@ function M.scan(state, callback)
 
 					state.sort_function_override = state.zk_sort_function
 
+					-- print("Before deep_sort") -- DEBUG:
+					-- print("root.children: " .. vim.inspect(root.children)) -- DEBUG:
 					file_items.deep_sort(root.children, state.zk_sort_function)
+					-- print("After deep_sort") -- DEBUG:
 					-- file_items.advanced_sort(root.children, state) -- FIX: NEEDED?
 
 					-- state.path_to_reveal = vim.fn.expand("%:p") or nil -- FIX: そんな bufnr は無い、のエラー
@@ -261,7 +305,8 @@ function M.scan(state, callback)
 					-- state.path_to_reveal = utils.normalize_path(manager.get_path_to_reveal() or "")
 					-- print("state.path_to_reveal: " .. (state.path_to_reveal or "nil"))
 
-					renderer.show_nodes({ root }, state)
+					-- renderer.show_nodes({ root }, state) -- DEBUG: あれ、これ要らない？ なくても表示されるぜ？ おそらく get_items_async() が内部で表示してる
+					-- renderer.show_nodes({ root.children }, state) -- DEBUG:
 
 					state.loading = false
 					if type(callback) == "function" then
