@@ -52,8 +52,8 @@ local function zk_sort_function(state, a, b)
 	end
 
 	-- Both are files
-	local a_cache = state.notes_cache[a.path]
-	local b_cache = state.notes_cache[b.path]
+	local a_cache = state.zk.notes_cache[a.path]
+	local b_cache = state.zk.notes_cache[b.path]
 	local a_title = a_cache and a_cache.title
 	local b_title = b_cache and b_cache.title
 
@@ -73,132 +73,6 @@ local function zk_sort_function(state, a, b)
 	return a.name:lower() < b.name:lower() -- Sort by filename
 end
 
--- function M.scan(state, callback)
--- 	state.git_ignored = state.git_ignored or {}
---
--- 	-- local renderer = require("neo-tree.ui.renderer") -- DEBUG:
--- 	-- renderer.get_expanded_nodes(state.tree, state.path) -- そりゃ state.tree はまだ生成されてないよな
--- 	-- print(vim.inspect(state.expanded_nodes)) -- DEBUG: これ残ってるらしいが -> nil やんけ！ どこから取得するんだろう？
--- 	print(
--- 		"before get_items(): state.default_expanded_nodes: "
--- 			.. vim.inspect(state.default_expanded_nodes)
--- 	) -- DEBUG:
--- 	print(
--- 		"before get_items(): state.explicitly_opened_nodes: "
--- 			.. vim.inspect(state.explicitly_opened_nodes)
--- 	) -- DEBUG:
---
--- 	state.sort_function_override = state.zk_sort_function -- DEBUG: ためしにここでソート設定 notes_cache が無いから効かなそう。
---
--- 	-- Get filesystem items
--- 	fs_scan.get_items_async(state, state.path, state.path_to_reveal, function()
--- 		print(
--- 			"after get_items(): state.default_expanded_nodes: "
--- 				.. vim.inspect(state.default_expanded_nodes)
--- 		) -- DEBUG:
--- 		print(
--- 			"after get_items(): state.explicitly_opened_nodes: "
--- 				.. vim.inspect(state.explicitly_opened_nodes)
--- 		) -- DEBUG:
---
--- 		-- WARN: ⭐️⭐️⭐️ state.explicitly_opened_nodes の使用ヶ所を調査し、どこで保存・復元しているかを調べる。
--- 		-- state.explicitly_opened_nodes = {
--- 		-- 	["/Users/rio/Projects/terminal/test/b"] = true,
--- 		-- 	["/Users/rio/Projects/terminal/test/dir1"] = true,
--- 		-- }
--- 		state.default_expanded_nodes = {
--- 			"/Users/rio/Projects/terminal/test/b",
--- 			"/Users/rio/Projects/terminal/test/dir1",
--- 		}
---
--- 		-- Get zk items
--- 		require("zk.api").list(
--- 			state.path,
--- 			vim.tbl_extend("error", { select = { "absPath", "title" } }, state.zk.query or {}),
--- 			function(err, notes)
--- 				if err then
--- 					log.error("Error querying notes " .. vim.inspect(err))
--- 					return
--- 				end
---
--- 				state.notes_cache = index_by_path(notes)
---
--- 				local context = file_items.create_context(state)
--- 				local root = file_items.create_item(context, state.path, "directory")
--- 				root.id = state.path
--- 				root.name = vim.fn.fnamemodify(state.path, ":~")
--- 				root.search_pattern = state.search_pattern
--- 				context.folders[root.path] = root
---
--- 				-- Create items from zk notes
--- 				for _, note in pairs(notes) do
--- 					local success, item = pcall(file_items.create_item, context, note.absPath, "file")
--- 					if not success then
--- 						log.error("Error creating item for " .. note.absPath .. ": " .. item)
--- 					end
--- 				end
---
--- 				-- state.default_expanded_nodes = {} -- DEBUG: これをコメントアウトしただけでは、直前の expanded は再現されない
--- 				-- get_itmes() と state をやりとりしないと？
--- 				-- print(vim.inspect(state.expanded_nodes)) -- DEBUG: これ残ってるらしいが -> nil やんけ！ どこから取得するんだろう？
--- 				-- state.default_expanded_nodes = state.default_expanded_nodes -- DEBUG: これは効果なし 値はあるのに。
--- 				-- いや、root しかセットされてないや。expand したときに defauto...にセットしてないのか？
---
--- 				-- DEBUG: このあたりか？
--- 				--
--- 				-- state.explicitly_opened_nodes = state.explicitly_opened_nodes or {}
--- 				-- local expanded_nodes = renderer.get_expanded_nodes(state.tree)
---
--- 				-- state.default_expanded_nodes = {
--- 				-- 	"/Users/rio/Projects/terminal/test/b",
--- 				-- 	"/Users/rio/Projects/terminal/test/dir1",
--- 				-- }
---
--- 				-- print("state.tree: " .. vim.inspect(state.tree))
---
--- 				-- require("neo-tree.ui.renderer").set_expanded_nodes(state.tree, state.default_expanded_nodes)
--- 				local renderer = require("neo-tree.ui.renderer")
---
--- 				-- show_nodes は内部で必要な読み込みと展開を行う
--- 				-- renderer.show_nodes(state, state.default_expanded_nodes) -- renderers が nil のエラー
--- 				--
--- 				-- renderer.redraw(state)
---
--- 				state.default_expanded_nodes = {}
--- 				for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
--- 					if opened then
--- 						table.insert(state.default_expanded_nodes, id)
--- 					end
--- 				end
--- 				-- if true then -- DEBUG:
--- 				-- 	return true
--- 				-- end
---
--- 				print(
--- 					"final get_items(): state.default_expanded_nodes: "
--- 						.. vim.inspect(state.default_expanded_nodes)
--- 				) -- DEBUG:
--- 				print(
--- 					"final get_items(): state.explicitly_opened_nodes: "
--- 						.. vim.inspect(state.explicitly_opened_nodes)
--- 				) -- DEBUG:
---
--- 				-- Sort
--- 				state.zk_sort_function = function(a, b)
--- 					return zk_sort_function(state, a, b)
--- 				end
--- 				state.sort_function_override = state.zk_sort_function
--- 				file_items.deep_sort(root.children, state.zk_sort_function)
---
--- 				state.loading = false
--- 				if type(callback) == "function" then
--- 					callback()
--- 				end
--- 			end
--- 		)
--- 	end)
--- end
-
 function M.scan(state, callback)
 	state.git_ignored = state.git_ignored or {}
 
@@ -212,7 +86,7 @@ function M.scan(state, callback)
 				return
 			end
 
-			state.notes_cache = index_by_path(notes)
+			state.zk.notes_cache = index_by_path(notes)
 
 			local context = file_items.create_context(state)
 			local root = file_items.create_item(context, state.path, "directory")

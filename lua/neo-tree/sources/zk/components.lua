@@ -46,7 +46,7 @@ M.name = function(config, node, state)
 	end
 
 	if node.type == "file" then
-		local cached = state.notes_cache and state.notes_cache[node.path]
+		local cached = state.zk.notes_cache and state.zk.notes_cache[node.path]
 		if cached and cached.title then
 			text = cached.title
 		end
