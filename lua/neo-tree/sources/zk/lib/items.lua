@@ -88,6 +88,8 @@ function M.scan(state, callback)
 			.. vim.inspect(state.explicitly_opened_nodes)
 	) -- DEBUG:
 
+	state.sort_function_override = state.zk_sort_function -- DEBUG: ためしにここでソート設定 notes_cache が無いから効かなそう。
+
 	-- Get filesystem items
 	fs_scan.get_items_async(state, state.path, state.path_to_reveal, function()
 		print(
@@ -168,9 +170,9 @@ function M.scan(state, callback)
 						table.insert(state.default_expanded_nodes, id)
 					end
 				end
-				if true then
-					return true
-				end
+				-- if true then -- DEBUG:
+				-- 	return true
+				-- end
 
 				print(
 					"final get_items(): state.default_expanded_nodes: "
