@@ -10,15 +10,19 @@ local default_query = {
 	query = {},
 }
 
----@param bufnr number?
+---Get notebook root directory from a path
+---@param path string?
 ---@return string? path inside a notebook
-local function resolve_notebook_path_from_dir(path, cwd)
+local function resolve_notebook_path(path)
+	local zk_util = require("zk.util")
+	local cwd = vim.fn.getcwd()
+
 	-- if the buffer has no name (i.e. it is empty), set the current working directory as it's path
 	if not path or path == "" then
 		path = cwd
 	end
-	if not require("zk.util").notebook_root(path) then
-		if not require("zk.util").notebook_root(cwd) then
+	if not zk_util.notebook_root(path) then
+		if not zk_util.notebook_root(cwd) then
 			-- if neither the buffer nor the cwd belong to a notebook, use $ZK_NOTEBOOK_DIR as fallback if available
 			if vim.env.ZK_NOTEBOOK_DIR then
 				path = vim.env.ZK_NOTEBOOK_DIR
@@ -32,15 +36,21 @@ local function resolve_notebook_path_from_dir(path, cwd)
 	return path
 end
 
+---Index state.zk.notes_cache by path
+---@param notes table?
+---@return table tbl indexed by path
 local function index_by_path(notes)
 	local tbl = {}
-	for _, note in ipairs(notes) do
+	for _, note in ipairs(notes or {}) do
 		tbl[note.absPath] = note
 	end
 	return tbl
 end
 
----Sort by 1.Directory > 2.Title > 3.filename
+---Default sort function (directory > title > filename)
+---@param state table neotree.State
+---@param a table
+---@param b table
 local function sorter(state, a, b)
 	-- 1. Directories come first
 	if a.type == "directory" and b.type ~= "directory" then
@@ -73,6 +83,9 @@ local function sorter(state, a, b)
 	return a.name:lower() < b.name:lower() -- Sort by filename
 end
 
+---Get and set zk items
+---@param state table neotree.State
+---@param callback function?
 function M.scan(state, callback)
 	state.git_ignored = state.git_ignored or {}
 
@@ -125,15 +138,16 @@ function M.scan(state, callback)
 	)
 end
 
----Get a table of all open buffers, along with all parent paths of those buffers.
----The paths are the keys of the table, and all the values are 'true'.
+---An entry point to get zk items
+---@param state table neotree.State
+---@param path string?
 function M.get_zk(state, path)
 	if state.loading then
 		return
 	end
 	state.loading = true
 	if not state.zk then
-		state.path = resolve_notebook_path_from_dir(path, vim.fn.getcwd())
+		state.path = resolve_notebook_path(path)
 		state.zk = {
 			query = default_query,
 		}
