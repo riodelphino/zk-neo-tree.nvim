@@ -43,7 +43,7 @@ M.match_fts = {
 					desc = "Match (full-text) " .. input,
 					query = {
 						match = input,
-						matchStrategy = 'fts',
+						matchStrategy = "fts",
 					},
 				})
 			end
@@ -59,7 +59,7 @@ M.match_re = {
 					desc = "Match (regular expression) " .. input,
 					query = {
 						match = input,
-						matchStrategy = 're',
+						matchStrategy = "re",
 					},
 				})
 			end
@@ -75,7 +75,7 @@ M.match_exact = {
 					desc = "Match (exact) " .. input,
 					query = {
 						match = input,
-						matchStrategy = 'exact',
+						matchStrategy = "exact",
 					},
 				})
 			end
