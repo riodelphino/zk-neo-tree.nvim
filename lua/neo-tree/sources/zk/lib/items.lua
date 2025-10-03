@@ -84,7 +84,7 @@ function M.scan(state, callback)
 			.. vim.inspect(state.default_expanded_nodes)
 	) -- DEBUG:
 	print(
-		"before get_items(): state.explicitly_opened_nodes"
+		"before get_items(): state.explicitly_opened_nodes: "
 			.. vim.inspect(state.explicitly_opened_nodes)
 	) -- DEBUG:
 
@@ -95,7 +95,7 @@ function M.scan(state, callback)
 				.. vim.inspect(state.default_expanded_nodes)
 		) -- DEBUG:
 		print(
-			"after get_items(): state.explicitly_opened_nodes"
+			"after get_items(): state.explicitly_opened_nodes: "
 				.. vim.inspect(state.explicitly_opened_nodes)
 		) -- DEBUG:
 
@@ -151,7 +151,8 @@ function M.scan(state, callback)
 				-- 	"/Users/rio/Projects/terminal/test/b",
 				-- 	"/Users/rio/Projects/terminal/test/dir1",
 				-- }
-				print("state.tree: " .. vim.inspect(state.tree))
+
+				-- print("state.tree: " .. vim.inspect(state.tree))
 
 				-- require("neo-tree.ui.renderer").set_expanded_nodes(state.tree, state.default_expanded_nodes)
 				local renderer = require("neo-tree.ui.renderer")
@@ -161,13 +162,24 @@ function M.scan(state, callback)
 				--
 				-- renderer.redraw(state)
 
-				print("state.explicitly_opened_nodes: " .. vim.inspect(state.explicitly_opened_nodes))
 				state.default_expanded_nodes = {}
 				for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
 					if opened then
 						table.insert(state.default_expanded_nodes, id)
 					end
 				end
+				if true then
+					return true
+				end
+
+				print(
+					"final get_items(): state.default_expanded_nodes: "
+						.. vim.inspect(state.default_expanded_nodes)
+				) -- DEBUG:
+				print(
+					"final get_items(): state.explicitly_opened_nodes: "
+						.. vim.inspect(state.explicitly_opened_nodes)
+				) -- DEBUG:
 
 				-- Sort
 				state.zk_sort_function = function(a, b)
