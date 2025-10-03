@@ -41,7 +41,7 @@ local function index_by_path(notes)
 end
 
 ---Sort by 1.Directory > 2.Title > 3.filename
-local function zk_sort_function(state, a, b)
+local function sorter(state, a, b)
 	-- 1. Directories come first
 	if a.type == "directory" and b.type ~= "directory" then
 		return true
@@ -111,11 +111,11 @@ function M.scan(state, callback)
 			end
 
 			-- Sort
-			state.zk_sort_function = function(a, b)
-				return zk_sort_function(state, a, b)
+			state.zk.sorter = function(a, b)
+				return sorter(state, a, b)
 			end
-			state.sort_function_override = state.zk_sort_function
-			file_items.deep_sort(root.children, state.zk_sort_function)
+			state.sort_function_override = state.zk.sorter
+			file_items.deep_sort(root.children, state.zk.sorter)
 
 			state.loading = false
 			if type(callback) == "function" then
