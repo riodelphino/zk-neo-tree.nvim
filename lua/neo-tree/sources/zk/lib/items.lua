@@ -126,6 +126,7 @@ function M.scan(state, callback)
 				root.id = state.path
 				root.name = vim.fn.fnamemodify(state.path, ":~")
 				root.search_pattern = state.search_pattern
+				context.folders[root.path] = root
 
 				-- Create items from zk notes
 				for _, note in pairs(notes) do
@@ -157,7 +158,16 @@ function M.scan(state, callback)
 
 				-- show_nodes は内部で必要な読み込みと展開を行う
 				-- renderer.show_nodes(state, state.default_expanded_nodes) -- renderers が nil のエラー
-				renderer.redraw(state)
+				--
+				-- renderer.redraw(state)
+
+				print("state.explicitly_opened_nodes: " .. vim.inspect(state.explicitly_opened_nodes))
+				state.default_expanded_nodes = {}
+				for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
+					if opened then
+						table.insert(state.default_expanded_nodes, id)
+					end
+				end
 
 				-- Sort
 				state.zk_sort_function = function(a, b)
