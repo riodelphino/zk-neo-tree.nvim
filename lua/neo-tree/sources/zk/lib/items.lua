@@ -202,18 +202,6 @@ end
 function M.scan(state, callback)
 	state.git_ignored = state.git_ignored or {}
 
-	-- local renderer = require("neo-tree.ui.renderer") -- DEBUG:
-	-- renderer.get_expanded_nodes(state.tree, state.path) -- そりゃ state.tree はまだ生成されてないよな
-	-- print(vim.inspect(state.expanded_nodes)) -- DEBUG: これ残ってるらしいが -> nil やんけ！ どこから取得するんだろう？
-	print(
-		"before get_items(): state.default_expanded_nodes: "
-			.. vim.inspect(state.default_expanded_nodes)
-	) -- DEBUG:
-	print(
-		"before get_items(): state.explicitly_opened_nodes: "
-			.. vim.inspect(state.explicitly_opened_nodes)
-	) -- DEBUG:
-
 	-- Get zk items
 	require("zk.api").list(
 		state.path,
@@ -241,50 +229,12 @@ function M.scan(state, callback)
 				end
 			end
 
-			-- state.default_expanded_nodes = {} -- DEBUG: これをコメントアウトしただけでは、直前の expanded は再現されない
-			-- get_itmes() と state をやりとりしないと？
-			-- print(vim.inspect(state.expanded_nodes)) -- DEBUG: これ残ってるらしいが -> nil やんけ！ どこから取得するんだろう？
-			-- state.default_expanded_nodes = state.default_expanded_nodes -- DEBUG: これは効果なし 値はあるのに。
-			-- いや、root しかセットされてないや。expand したときに defauto...にセットしてないのか？
-
-			-- DEBUG: このあたりか？
-			--
-			-- state.explicitly_opened_nodes = state.explicitly_opened_nodes or {}
-			-- local expanded_nodes = renderer.get_expanded_nodes(state.tree)
-
-			-- state.default_expanded_nodes = {
-			-- 	"/Users/rio/Projects/terminal/test/b",
-			-- 	"/Users/rio/Projects/terminal/test/dir1",
-			-- }
-
-			-- print("state.tree: " .. vim.inspect(state.tree))
-
-			-- require("neo-tree.ui.renderer").set_expanded_nodes(state.tree, state.default_expanded_nodes)
-			local renderer = require("neo-tree.ui.renderer")
-
-			-- show_nodes は内部で必要な読み込みと展開を行う
-			-- renderer.show_nodes(state, state.default_expanded_nodes) -- renderers が nil のエラー
-			--
-			-- renderer.redraw(state)
-
 			state.default_expanded_nodes = {}
 			for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
 				if opened then
 					table.insert(state.default_expanded_nodes, id)
 				end
 			end
-			-- if true then -- DEBUG:
-			-- 	return true
-			-- end
-
-			print(
-				"final get_items(): state.default_expanded_nodes: "
-					.. vim.inspect(state.default_expanded_nodes)
-			) -- DEBUG:
-			print(
-				"final get_items(): state.explicitly_opened_nodes: "
-					.. vim.inspect(state.explicitly_opened_nodes)
-			) -- DEBUG:
 
 			-- Sort
 			state.zk_sort_function = function(a, b)
@@ -297,29 +247,6 @@ function M.scan(state, callback)
 			if type(callback) == "function" then
 				callback()
 			end
-		end,
-		function()
-			-- Get filesystem items
-			fs_scan.get_items_async(state, state.path, state.path_to_reveal, function()
-				print(
-					"after get_items(): state.default_expanded_nodes: "
-						.. vim.inspect(state.default_expanded_nodes)
-				) -- DEBUG:
-				print(
-					"after get_items(): state.explicitly_opened_nodes: "
-						.. vim.inspect(state.explicitly_opened_nodes)
-				) -- DEBUG:
-
-				-- WARN: ⭐️⭐️⭐️ state.explicitly_opened_nodes の使用ヶ所を調査し、どこで保存・復元しているかを調べる。
-				-- state.explicitly_opened_nodes = {
-				-- 	["/Users/rio/Projects/terminal/test/b"] = true,
-				-- 	["/Users/rio/Projects/terminal/test/dir1"] = true,
-				-- }
-				state.default_expanded_nodes = {
-					"/Users/rio/Projects/terminal/test/b",
-					"/Users/rio/Projects/terminal/test/dir1",
-				}
-			end)
 		end
 	)
 end
