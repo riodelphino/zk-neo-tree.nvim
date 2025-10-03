@@ -112,10 +112,10 @@ function M.scan(state, callback)
 
 			-- Sort
 			state.zk.sorter = function(a, b)
-				return sorter(state, a, b)
+				return sorter(state, a, b) -- Wrap sorter to access state.zk.notes_cache
 			end
 			state.sort_function_override = state.zk.sorter
-			file_items.deep_sort(root.children, state.zk.sorter)
+			file_items.deep_sort(root.children)
 
 			state.loading = false
 			if type(callback) == "function" then
