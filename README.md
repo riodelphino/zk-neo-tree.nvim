@@ -38,6 +38,7 @@ In your [neo-tree](https://github.com/nvim-neo-tree/neo-tree.nvim) config:
       window = {
          mappings = {
             ['n'] = 'change_query',
+            ['a'] = 'add', -- FIX: Where is it set?
             -- Additional keys from filesystem source -- FIX: TESTING
             ['H'] = 'toggle_hidden',
             ['<bs>'] = 'navigate_up',
