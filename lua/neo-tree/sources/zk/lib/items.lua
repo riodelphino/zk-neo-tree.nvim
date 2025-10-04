@@ -53,7 +53,6 @@ end
 ---@param a table
 ---@param b table
 local function sorter(state, a, b)
-	print("sorter")
 	-- 1. Directories come first
 	if a.type == "directory" and b.type ~= "directory" then
 		return true
@@ -112,14 +111,7 @@ function M.scan(state, callback)
 		state.zk.notes_cache = index_by_path(notes)
 
 		local context = file_items.create_context(state)
-		local root
-		if vim.tbl_isempty(state.zk.query.query or {}) then
-			root = file_items.create_item(context, state.path, "directory") -- Get all files and directories
-		else
-			root = {}
-			root.path = state.path
-			root.children = {} -- DEBUG: 初期化方法は？ common かな？
-		end
+		local root = file_items.create_item(context, state.path, "directory")
 
 		root.id = state.path
 		root.name = vim.fn.fnamemodify(state.path, ":~")
@@ -216,6 +208,8 @@ function M.scan(state, callback)
 		state.sort_function_override = state.zk.sorter
 		-- file_items.deep_sort(root.children)
 		file_items.deep_sort(root.children, state.zk.sorter)
+
+		print("root" .. vim.inspect(root))
 
 		renderer.show_nodes({ root }, state, nil, callback)
 		-- renderer.show_nodes({ root }, state, state.path, callback)
