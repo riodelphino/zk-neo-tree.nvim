@@ -181,20 +181,21 @@ function M.scan(state, callback)
 
 		-- print("state: " .. vim.inspect(state)) -- DEBUG:
 		if state.tree then
-			print("tree あったよ！")
+			-- print("tree あったよ！") -- DEBUG:
 			local node_id = "/Users/rio/Projects/terminal/test/A.md"
 			local node = state.tree:get_node(node_id)
 			if node then
-				print("node もあったよ！: " .. vim.inspect(node))
+				-- print("node もあったよ！: " .. vim.inspect(node)) -- DEBUG:
 				local ret = state.tree:remove_node(node_id)
 				if not ret then
-					print("node 削除にしっぱい！")
+					print("node 削除にしっぱい！") -- DEBUG:
 				end
 				state.tree:render()
 
 				node = state.tree:get_node(node_id) -- Again
-				print("削除したはずのnode: " .. vim.inspect(node))
-				print("node 削除後のstate: " .. vim.inspect(state))
+				-- print("削除したはずのnode: " .. vim.inspect(node)) -- DEBUG:
+
+				-- print("node 削除後のstate: " .. vim.inspect(state)) -- DEBUG:
 
 				-- local utils = require("neo-tree.utils")
 				-- local manager = require("neo-tree.sources.manager")
