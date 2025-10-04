@@ -222,7 +222,7 @@ end
 ---An entry point to get zk items
 ---@param state table neotree.State
 ---@param path string?
-function M.get_zk(state, path)
+function M.get_zk(state, path, callback)
 	if state.loading then
 		return
 	end
@@ -234,7 +234,7 @@ function M.get_zk(state, path)
 		}
 	end
 
-	M.scan(state)
+	M.scan(state, callback)
 end
 
 return M
