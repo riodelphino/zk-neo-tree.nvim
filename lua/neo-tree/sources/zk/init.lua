@@ -64,40 +64,6 @@ local follow_internal = function(callback, force_show, async)
 	if not is_in_path then
 		return false
 	end
-
-	-- DEBUG: can remove ???
-	--
-	-- log.debug("follow file: ", path_to_reveal)
-	-- local show_only_explicitly_opened = function()
-	-- 	state.explicitly_opened_nodes = state.explicitly_opened_nodes or {}
-	-- 	local expanded_nodes = renderer.get_expanded_nodes(state.tree)
-	-- 	local state_changed = false
-	-- 	for _, id in ipairs(expanded_nodes) do
-	-- 		if not state.explicitly_opened_nodes[id] then
-	-- 			if path_to_reveal:sub(1, #id) == id then
-	-- 				state.explicitly_opened_nodes[id] = state.follow_current_file.leave_dirs_open
-	-- 			else
-	-- 				local node = state.tree:get_node(id)
-	-- 				if node then
-	-- 					node:collapse()
-	-- 					state_changed = true
-	-- 				end
-	-- 			end
-	-- 		end
-	-- 		if state_changed then
-	-- 			renderer.redraw(state)
-	-- 		end
-	-- 	end
-	-- end
-	--
-	-- fs_scan.get_items(state, nil, path_to_reveal, function()
-	-- 	show_only_explicitly_opened()
-	-- 	renderer.focus_node(state, path_to_reveal, true)
-	-- 	if type(callback) == "function" then
-	-- 		callback()
-	-- 	end
-	-- end, async)
-	-- return true
 end
 
 M.default_config = {
@@ -167,14 +133,7 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 	if path_to_reveal then
 		renderer.position.set(state, path_to_reveal)
 		log.debug("navigate_internal: in path_to_reveal, state.position=", state.position.node_id)
-		-- log.debug("M._navigate_internal の中で get_items が呼ばれる直前") -- DEBUG:
-		-- fs_scan.get_items_async(state, nil, path_to_reveal, function()
-		-- 	items.get_zk(state, path, callback)
-		-- end) -- DEBUG: 削除するとneo-treeがロードされない  -- WARN: get_items
 		items.get_zk(state, path, callback)
-
-		-- print("M._navigate_internal の中で get_zk が呼ばれる直前")
-		-- items.get_zk(state, path) -- DEBUG: これいる？ 試しにいれたけど。
 	else
 		local is_current = state.current_position == "current"
 		local follow_file = state.follow_current_file.enabled
@@ -192,10 +151,6 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 			else
 				log.trace("navigate_internal: FAILED to save position: ", msg)
 			end
-			-- print("not handled になり、get_items を呼ぶ直前")
-			-- fs_scan.get_items_async(state, nil, nil, function()
-			-- 	items.get_zk(state, path)
-			-- end) -- WARN: get_items
 			items.get_zk(state, path, callback)
 		end
 	end
@@ -220,9 +175,9 @@ M.navigate = function(state, path, path_to_reveal, callback, async)
 	items.get_zk(state, path) -- DEBUG: これが async に繋がってないのがおかしくない？
 end
 
--- ---Configures the plugin, should be called before the plugin is used.
--- ---@param config neotree.Config.Filesystem Configuration table containing any keys that the user wants to change from the defaults. May be empty to accept default values.
--- ---@param global_config neotree.Config.Base
+---Configures the plugin, should be called before the plugin is used.
+---@param config neotree.Config.Filesystem Configuration table containing any keys that the user wants to change from the defaults. May be empty to accept default values.
+---@param global_config neotree.Config.Base
 M.setup = function(config, global_config)
 	config.filtered_items = config.filtered_items or {}
 	config.enable_git_status = config.enable_git_status or global_config.enable_git_status

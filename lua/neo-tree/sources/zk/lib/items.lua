@@ -1,6 +1,6 @@
 local vim = vim
 local file_items = require("neo-tree.sources.common.file-items")
-local fs_scan = require("neo-tree.sources.filesystem.lib.fs_scan")
+-- local fs_scan = require("neo-tree.sources.filesystem.lib.fs_scan")
 local renderer = require("neo-tree.ui.renderer")
 local log = require("neo-tree.log")
 
@@ -90,15 +90,6 @@ end
 function M.scan(state, callback)
 	state.git_ignored = state.git_ignored or {}
 
-	-- Get zk items
-
-	-- state.zk.query = {
-	-- 	desc = "Tag book",
-	-- 	query = {
-	-- 		tags = { "book" },
-	-- 	},
-	-- }
-
 	local opts =
 		vim.tbl_extend("error", { select = { "absPath", "title" } }, state.zk.query.query or {})
 
@@ -117,7 +108,6 @@ function M.scan(state, callback)
 		root.name = vim.fn.fnamemodify(state.path, ":~")
 		root.search_pattern = state.search_pattern
 		context.folders[root.path] = root
-		-- print("root (after context.folders[]): " .. vim.inspect(root)) -- DEBUG: ここでは root しかない
 
 		-- Create items from zk notes
 		for _, note in pairs(notes) do
@@ -126,7 +116,6 @@ function M.scan(state, callback)
 				log.error("Error creating item for " .. note.absPath .. ": " .. item)
 			end
 		end
-		-- print("root (after create_item with notes_cache): " .. vim.inspect(root)) -- DEBUG: ここでは root.children が生成済み(当然)
 
 		state.default_expanded_nodes = {}
 		for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
@@ -135,84 +124,14 @@ function M.scan(state, callback)
 			end
 		end
 
-		if not vim.tbl_isempty(state.zk.query.query or {}) then
-			-- print("state.zk.query.query is not empty.") -- DEBUG:
-			-- Add here ムダなファイルを除去する
-
-			-- for _, root in ipairs(state.tree:get_nodes()) do
-			-- 	-- filter_tree(root:get_id())
-			-- 	print(vim.inspect(root))
-			-- end
-			-- -- manager.redraw(state.name)
-
-			-- for idx, item in ipairs(root.children) do
-			-- 	print(vim.inspect(item))
-			--    if not state.zk.notes_cache[item.id] then
-			--       -- root.children[idx] を削除する処理
-			--    end
-			-- end
-
-			-- root.children = vim.tbl_filter(
-			-- 	function(item) -- 良い方法だけど、root.children がそもそも notes_cache と同じになってしまってる。nodeじゃないとね。
-			-- 		print(vim.inspect(item))
-			-- 		return state.zk.notes_cache[item.id] ~= nil
-			-- 	end,
-			-- 	root.children
-			-- )
-		end
-
-		-- DEBUG: NOT WORKS
-		-- tree 生成されてないエラー
-		--
-		-- local renderer = require("neo-tree.ui.renderer")
-		--
-		-- -- 表示中ツリーから node をフィルタ
-		-- local nodes = renderer.get_expanded_nodes(state.tree, state.path) -- 展開ノードを取得
-		-- local filtered = vim.tbl_filter(function(node)
-		-- 	return state.zk.notes_cache[node.id] ~= nil
-		-- end, nodes)
-		-- renderer.show_nodes(filtered, state)
-
-		-- DEBUG: ノード削除のテストだ。get_items を呼ばなくしたので、いらないはず
-		-- -- print("state: " .. vim.inspect(state)) -- DEBUG:
-		-- if state.tree then
-		-- 	-- print("tree あったよ！") -- DEBUG:
-		-- 	local node_id = "/Users/rio/Projects/terminal/test/A.md"
-		-- 	local node = state.tree:get_node(node_id)
-		-- 	if node then
-		-- 		-- print("node もあったよ！: " .. vim.inspect(node)) -- DEBUG:
-		-- 		local ret = state.tree:remove_node(node_id)
-		-- 		if not ret then
-		-- 			print("node 削除にしっぱい！") -- DEBUG:
-		-- 		end
-		-- 		state.tree:render()
-		--
-		-- 		node = state.tree:get_node(node_id) -- Again
-		-- 		-- print("削除したはずのnode: " .. vim.inspect(node)) -- DEBUG:
-		--
-		-- 		-- print("node 削除後のstate: " .. vim.inspect(state)) -- DEBUG:
-		--
-		-- 		-- local utils = require("neo-tree.utils")
-		-- 		-- local manager = require("neo-tree.sources.manager")
-		-- 		-- local refresh = utils.wrap(manager.refresh, "zk")
-		--
-		-- 		-- require("neo-tree.sources.manager").redraw("zk")
-		-- 		-- refresh()
-		-- 	end
-		-- end
-
 		-- Sort
 		state.zk.sorter = function(a, b)
 			return sorter(state, a, b) -- Wrap sorter to access state.zk.notes_cache
 		end
 		state.sort_function_override = state.zk.sorter
-		-- file_items.deep_sort(root.children)
 		file_items.deep_sort(root.children, state.zk.sorter)
 
-		print("root" .. vim.inspect(root))
-
 		renderer.show_nodes({ root }, state, nil, callback)
-		-- renderer.show_nodes({ root }, state, state.path, callback)
 
 		state.loading = false
 		if type(callback) == "function" then
