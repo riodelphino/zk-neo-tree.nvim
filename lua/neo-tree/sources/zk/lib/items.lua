@@ -1,6 +1,7 @@
 local vim = vim
 local file_items = require("neo-tree.sources.common.file-items")
 local fs_scan = require("neo-tree.sources.filesystem.lib.fs_scan")
+local renderer = require("neo-tree.ui.renderer")
 local log = require("neo-tree.log")
 
 local M = {}
@@ -52,6 +53,7 @@ end
 ---@param a table
 ---@param b table
 local function sorter(state, a, b)
+	print("sorter")
 	-- 1. Directories come first
 	if a.type == "directory" and b.type ~= "directory" then
 		return true
@@ -179,39 +181,44 @@ function M.scan(state, callback)
 		-- end, nodes)
 		-- renderer.show_nodes(filtered, state)
 
-		-- print("state: " .. vim.inspect(state)) -- DEBUG:
-		if state.tree then
-			-- print("tree あったよ！") -- DEBUG:
-			local node_id = "/Users/rio/Projects/terminal/test/A.md"
-			local node = state.tree:get_node(node_id)
-			if node then
-				-- print("node もあったよ！: " .. vim.inspect(node)) -- DEBUG:
-				local ret = state.tree:remove_node(node_id)
-				if not ret then
-					print("node 削除にしっぱい！") -- DEBUG:
-				end
-				state.tree:render()
-
-				node = state.tree:get_node(node_id) -- Again
-				-- print("削除したはずのnode: " .. vim.inspect(node)) -- DEBUG:
-
-				-- print("node 削除後のstate: " .. vim.inspect(state)) -- DEBUG:
-
-				-- local utils = require("neo-tree.utils")
-				-- local manager = require("neo-tree.sources.manager")
-				-- local refresh = utils.wrap(manager.refresh, "zk")
-
-				-- require("neo-tree.sources.manager").redraw("zk")
-				-- refresh()
-			end
-		end
+		-- DEBUG: ノード削除のテストだ。get_items を呼ばなくしたので、いらないはず
+		-- -- print("state: " .. vim.inspect(state)) -- DEBUG:
+		-- if state.tree then
+		-- 	-- print("tree あったよ！") -- DEBUG:
+		-- 	local node_id = "/Users/rio/Projects/terminal/test/A.md"
+		-- 	local node = state.tree:get_node(node_id)
+		-- 	if node then
+		-- 		-- print("node もあったよ！: " .. vim.inspect(node)) -- DEBUG:
+		-- 		local ret = state.tree:remove_node(node_id)
+		-- 		if not ret then
+		-- 			print("node 削除にしっぱい！") -- DEBUG:
+		-- 		end
+		-- 		state.tree:render()
+		--
+		-- 		node = state.tree:get_node(node_id) -- Again
+		-- 		-- print("削除したはずのnode: " .. vim.inspect(node)) -- DEBUG:
+		--
+		-- 		-- print("node 削除後のstate: " .. vim.inspect(state)) -- DEBUG:
+		--
+		-- 		-- local utils = require("neo-tree.utils")
+		-- 		-- local manager = require("neo-tree.sources.manager")
+		-- 		-- local refresh = utils.wrap(manager.refresh, "zk")
+		--
+		-- 		-- require("neo-tree.sources.manager").redraw("zk")
+		-- 		-- refresh()
+		-- 	end
+		-- end
 
 		-- Sort
 		state.zk.sorter = function(a, b)
 			return sorter(state, a, b) -- Wrap sorter to access state.zk.notes_cache
 		end
 		state.sort_function_override = state.zk.sorter
-		file_items.deep_sort(root.children)
+		-- file_items.deep_sort(root.children)
+		file_items.deep_sort(root.children, state.zk.sorter)
+
+		renderer.show_nodes({ root }, state, nil, callback)
+		-- renderer.show_nodes({ root }, state, state.path, callback)
 
 		state.loading = false
 		if type(callback) == "function" then
