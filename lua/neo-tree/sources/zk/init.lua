@@ -168,9 +168,11 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 		renderer.position.set(state, path_to_reveal)
 		log.debug("navigate_internal: in path_to_reveal, state.position=", state.position.node_id)
 		-- log.debug("M._navigate_internal の中で get_items が呼ばれる直前") -- DEBUG:
-		fs_scan.get_items_async(state, nil, path_to_reveal, function()
-			items.get_zk(state, path, callback)
-		end) -- DEBUG: 削除するとneo-treeがロードされない  -- WARN: get_items
+		-- fs_scan.get_items_async(state, nil, path_to_reveal, function()
+		-- 	items.get_zk(state, path, callback)
+		-- end) -- DEBUG: 削除するとneo-treeがロードされない  -- WARN: get_items
+		items.get_zk(state, path, callback)
+
 		-- print("M._navigate_internal の中で get_zk が呼ばれる直前")
 		-- items.get_zk(state, path) -- DEBUG: これいる？ 試しにいれたけど。
 	else
@@ -194,9 +196,7 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 			-- fs_scan.get_items_async(state, nil, nil, function()
 			-- 	items.get_zk(state, path)
 			-- end) -- WARN: get_items
-			fs_scan.get_items_async(state, nil, nil, function()
-				items.get_zk(state, path)
-			end) -- WARN: get_items
+			items.get_zk(state, path, callback)
 		end
 	end
 
