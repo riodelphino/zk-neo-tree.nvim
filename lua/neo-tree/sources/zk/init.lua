@@ -188,14 +188,6 @@ M.setup = function(config, global_config)
 		if config[key] == nil then
 			config[key] = global_config[key]
 		end
-		local value_str
-		if config[key] == true then
-			value_str = "true"
-		elseif config[key] == false then
-			value_str = "false"
-		else
-			value_str = tostring(config[key])
-		end
 	end
 
 	for _, key in ipairs({ "hide_by_pattern", "always_show_by_pattern", "never_show_by_pattern" }) do
