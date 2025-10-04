@@ -89,7 +89,6 @@ end
 ---@param callback function?
 function M.scan(state, callback)
 	state.git_ignored = state.git_ignored or {}
-	-- print(vim.inspect(state)) -- DEBUG: この時点で state.filtered_items は {} のまま。セットされていない感じ
 
 	local opts =
 		vim.tbl_extend("error", { select = { "absPath", "title" } }, state.zk.query.query or {})

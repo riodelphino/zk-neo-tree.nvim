@@ -3,7 +3,6 @@
 
 local vim = vim
 local utils = require("neo-tree.utils")
--- local fs_scan = require("neo-tree.sources.filesystem.lib.fs_scan") -- DEBUG: NOT NEEDED
 local renderer = require("neo-tree.ui.renderer")
 local items = require("neo-tree.sources.zk.lib.items")
 local events = require("neo-tree.events")
@@ -168,50 +167,14 @@ end
 
 ---Configures the plugin, should be called before the plugin is used.
 
--- ---@param config neotree.Config.Filesystem comes from the neo-tree's source specific option `{ zk = {...} }`
--- ---@param global_config neotree.Config.Base comes from the neo-tree's base option
+---@param config neotree.Config.Filesystem comes from the neo-tree's source specific option `{ zk = {...} }`
+---@param global_config neotree.Config.Base comes from the neo-tree's base option
 M.setup = function(config, global_config)
 	config = config or {}
 	config.filtered_items = config.filtered_items or {}
 	config.enable_git_status = config.enable_git_status or global_config.enable_git_status
 
-	-- default_config = require("neo-tree.sources.zk.defaults") -- DEBUG: いったん無しにしてみる。neo-tree = { zk = {} } でセットしてみる
-	config = vim.tbl_deep_extend("force", defaults, config) -- DEBUG: まさか逆？ いや合ってる
-	-- config = vim.tbl_deep_extend("force", config, default_config)
-
-	-- NOTE: うーん、neo-tree config から `{ zk = { filtered_items = {...} } }` をセットしておくと効くんだけどなぁ。
-
-	-- NOTE: `lua/neo-tree/defaults.lua` ここに、local defaults = { filesystem = { filtered_items = {...} } } があった。
-	-- これを取得している場所は...
-	-- neo-tree/setup/init.lua:
-	-- 2行目: local defaults = require("neo-tree.defaults")
-	-- だ。
-	--
-	-- NOTE: ソースごとの設定の取得とマージの流れ
-	-- neo-tree/setup/init.lua:
-	-- local defaults = require("neo-tree.defaults")
-	-- ここで、全default設定を取得し、
-	-- M.merge_config = function(user_config)
-	--    local default_config = vim.deepcopy(defaults)
-	--    user_config = vim.deepcopy(user_config or {})
-	-- からの 539行目:
-	--    local source_default_config = default_config[source_name]
-	-- で filesystem などの設定を取得し、568行目:
-	--    merge_renderers(default_config, source_default_config, user_config)
-	-- でマージをしている
-	-- 個別に state.filtered_items としていなくて、state に config をそのままマージしてるから、検索しづらい。
-	--
-	-- TODO: つまり
-	-- - state.filtered_items にコピーさせるには、
-	--    A. そもそもの lua/neo-tree/defaults.lua の local defaults に zk の設定を含める (fork)
-	--    B. neo-tree の setup() の config に `zk = { filtered_items = {...} }` をぜんぶ含める
-	-- しかないらしい。
-	-- ...
-	-- zk の setup 中に自力で zk の default_config を持ってきて merge する... では遅いようだ。state.filtered_items にコピーしてもらえない。
-	-- しかも setup 中からは未生成の state にアクセスできないし。
-
-	vim.notify("config: " .. vim.inspect(config.filtered_items), vim.log.levels.INFO) -- DEBUG:
-	vim.notify("default_config: " .. vim.inspect(defaults.filtered_items), vim.log.levels.INFO) -- DEBUG:
+	config = vim.tbl_deep_extend("force", defaults, config) -- FIX: Is this right? or NOT NEEDED?
 
 	-- Merge source specific config on global config
 	local shared_config = {
@@ -233,7 +196,6 @@ M.setup = function(config, global_config)
 		else
 			value_str = tostring(config[key])
 		end
-		-- vim.notify(key .. " : " .. value_str, vim.log.levels.INFO) -- DEBUG:
 	end
 
 	for _, key in ipairs({ "hide_by_pattern", "always_show_by_pattern", "never_show_by_pattern" }) do
@@ -251,7 +213,6 @@ M.setup = function(config, global_config)
 			config.filtered_items[key] = utils.list_to_dict(list)
 		end
 	end
-	-- vim.notify(vim.inspect(config.filtered_items), vim.log.levels.INFO) -- DEBUG:
 
 	--Configure events for before_render
 	if config.before_render then
@@ -266,7 +227,7 @@ M.setup = function(config, global_config)
 			end,
 		})
 	end
-	-- DEBUG: ここで if を分離してみた
+	-- DEBUG: Splited if statement here (just an expmeriment)
 
 	if config.enable_git_status and config.git_status_async then
 		manager.subscribe(M.name, {
@@ -374,7 +335,6 @@ M.setup = function(config, global_config)
 			end,
 		})
 	end
-	-- vim.notify(vim.inspect(config.filtered_items), vim.log.levels.INFO) -- DEBUG:
 end
 
 M.default_config = defaults
