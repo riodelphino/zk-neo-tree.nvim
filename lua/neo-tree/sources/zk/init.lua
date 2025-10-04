@@ -218,10 +218,7 @@ M.setup = function(config, global_config)
 				end
 			end,
 		})
-	end
-	-- DEBUG: Splited if statement here (just an expmeriment)
-
-	if config.enable_git_status and config.git_status_async then
+	elseif config.enable_git_status and config.git_status_async then
 		manager.subscribe(M.name, {
 			event = events.GIT_STATUS_CHANGED,
 			handler = wrap(manager.git_status_changed),
