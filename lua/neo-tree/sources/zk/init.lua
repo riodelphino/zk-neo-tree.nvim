@@ -172,7 +172,6 @@ M.navigate = function(state, path, path_to_reveal, callback, async)
 	utils.debounce("filesystem_navigate", function()
 		M._navigate_internal(state, path, path_to_reveal, callback, async)
 	end, 100, utils.debounce_strategy.CALL_FIRST_AND_LAST)
-	items.get_zk(state, path) -- DEBUG: これが async に繋がってないのがおかしくない？
 end
 
 ---Configures the plugin, should be called before the plugin is used.
