@@ -168,7 +168,7 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 		renderer.position.set(state, path_to_reveal)
 		log.debug("navigate_internal: in path_to_reveal, state.position=", state.position.node_id)
 		-- log.debug("M._navigate_internal の中で get_items が呼ばれる直前") -- DEBUG:
-		fs_scan.get_items(state, nil, path_to_reveal, function()
+		fs_scan.get_items_async(state, nil, path_to_reveal, function()
 			items.get_zk(state, path, callback)
 		end) -- DEBUG: 削除するとneo-treeがロードされない  -- WARN: get_items
 		-- print("M._navigate_internal の中で get_zk が呼ばれる直前")
@@ -191,7 +191,12 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 				log.trace("navigate_internal: FAILED to save position: ", msg)
 			end
 			-- print("not handled になり、get_items を呼ぶ直前")
-			fs_scan.get_items(state, nil, nil, callback, async) -- WARN: get_items
+			-- fs_scan.get_items_async(state, nil, nil, function()
+			-- 	items.get_zk(state, path)
+			-- end) -- WARN: get_items
+			fs_scan.get_items_async(state, nil, nil, function()
+				items.get_zk(state, path)
+			end) -- WARN: get_items
 		end
 	end
 
