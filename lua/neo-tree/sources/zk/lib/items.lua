@@ -108,6 +108,7 @@ end
 ---@param state table neotree.State
 ---@param path string?
 function M.get_zk(state, path, callback)
+	-- `state` keeps zk user/default config merged in its root.
 	if state.loading then
 		return
 	end
