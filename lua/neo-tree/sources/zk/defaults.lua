@@ -32,11 +32,18 @@ local config = {
 		select = { "absPath", "title"},
 
       ---Default name formatter
-      ---@param notes table cached notes by zk.api.list
+      ---@param note table? single cached note by zk.api.list
       ---@param node neotree.collections.ListNode
-		name_formatter = function(notes, node)
-   		local note = notes and notes[node.path]
+		name_formatter = function(note, node)
    		return note and note.title or node.name or nil
+      end,
+
+      ---Additional customizer for neotree.Render.Node table
+      ---@param rendere_nodes neotree.Render.Node[]
+      ---@param note table? single cached note by zk.api.list
+      ---@param node neotree.collections.ListNode
+      name_extra_renderer = function(rendere_nodes, note, node)
+         return rendere_nodes
       end,
 
 		---Default sort function (directory > title > filename)

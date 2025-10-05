@@ -19,6 +19,7 @@ local M = {}
 M.name = function(config, node, state)
 	local highlight = config.highlight or highlights.FILE_NAME
 	local text = node.name
+	local note
 
 	if node.type == "directory" then
 		highlight = highlights.DIRECTORY_NAME
@@ -45,7 +46,8 @@ M.name = function(config, node, state)
 	end
 
 	if node.type == "file" then
-		text = state.extra.name_formatter(state.zk.notes_cache, node)
+		note = state.zk.notes_cache and state.zk.notes_cache[node.path] or nil
+		text = state.extra.name_formatter(note, node)
 	end
 
 	local hl_opened = config.highlight_opened_files
@@ -67,10 +69,13 @@ M.name = function(config, node, state)
 		text = text
 	end
 
-	return {
+	local render_nodes = { {
 		text = text,
 		highlight = highlight,
-	}
+	} }
+
+	render_nodes = state.extra.name_extra_renderer(render_nodes, note, node)
+	return render_nodes
 end
 
 -- TODO: Add current_filter() from filesystem source

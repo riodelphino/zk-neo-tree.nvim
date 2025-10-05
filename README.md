@@ -116,6 +116,20 @@ zk-specific config:
       return note and note.title or node.name or nil
     end,
 
+    ---Additional customizer for neotree.Render.Node table
+    ---@param rendere_nodes neotree.Render.Node[]
+    ---@param note table? single cached note by zk.api.list
+    ---@param node neotree.collections.ListNode
+    name_extra_renderer = function(rendere_nodes, note, node)
+      -- The given `rendere_nodes` arg is a table: `{ { text = "<title_or_filename>", highlight = "<highlight_name>", } }`
+
+      -- Sample code for adding filename only for zk file
+      -- if note and note.title then
+      --   table.insert(rendere_nodes, { text = node.name, highlight = "NeotreeDimText"})
+      -- end
+      return rendere_nodes
+    end,
+
     ---Default sort function (directory > title > filename)
     ---@param notes table cached notes by zk.api.list
     ---@param a table
