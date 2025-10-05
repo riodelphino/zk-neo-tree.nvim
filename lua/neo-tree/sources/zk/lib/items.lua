@@ -1,6 +1,5 @@
 local vim = vim
 local file_items = require("neo-tree.sources.common.file-items")
--- local fs_scan = require("neo-tree.sources.filesystem.lib.fs_scan")
 local renderer = require("neo-tree.ui.renderer")
 local log = require("neo-tree.log")
 
@@ -88,6 +87,7 @@ end
 ---@param state table neotree.State
 ---@param callback function?
 function M.scan(state, callback)
+	print(vim.inspect(state.filtered_items)) -- DEBUG:
 	state.git_ignored = state.git_ignored or {}
 
 	local opts =
