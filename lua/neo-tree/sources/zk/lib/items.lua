@@ -87,7 +87,6 @@ end
 ---@param state table neotree.State
 ---@param callback function?
 function M.scan(state, callback)
-	print(vim.inspect(state.filtered_items)) -- DEBUG:
 	state.git_ignored = state.git_ignored or {}
 
 	local opts =
@@ -102,8 +101,8 @@ function M.scan(state, callback)
 		state.zk.notes_cache = index_by_path(notes)
 
 		local context = file_items.create_context(state)
-		local root = file_items.create_item(context, state.path, "directory")
 
+		local root = file_items.create_item(context, state.path, "directory")
 		root.id = state.path
 		root.name = vim.fn.fnamemodify(state.path, ":~")
 		root.search_pattern = state.search_pattern
@@ -117,6 +116,7 @@ function M.scan(state, callback)
 			end
 		end
 
+		-- Set expanded nodes
 		state.default_expanded_nodes = {}
 		for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
 			if opened then

@@ -2,11 +2,9 @@
 local vim = vim
 local uv = vim.uv or vim.loop
 local renderer = require("neo-tree.ui.renderer")
--- local cc = require("neo-tree.sources.common.commands") -- DEBUG: NEED THIS?
 local utils = require("neo-tree.utils")
 local manager = require("neo-tree.sources.manager")
 local log = require("neo-tree.log")
--- local fs = require("neo-tree.sources.filesystem") -- DEBUG: NEED THIS?
 local fs_actions = require("neo-tree.sources.filesystem.lib.fs_actions")
 local fs_commands = require("neo-tree.sources.filesystem.commands")
 local scan = require("neo-tree.sources.zk.lib.items").scan

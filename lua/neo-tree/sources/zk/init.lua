@@ -166,6 +166,10 @@ M.navigate = function(state, path, path_to_reveal, callback, async)
 	end, 100, utils.debounce_strategy.CALL_FIRST_AND_LAST)
 end
 
+M.refresh = function()
+	manager.refresh(M.name)
+end
+
 ---Configures the plugin, should be called before the plugin is used.
 
 ---@param config neotree.Config.Filesystem comes from the neo-tree's source specific option `{ zk = {...} }`
@@ -173,17 +177,20 @@ end
 M.setup = function(config, global_config)
 	config = config or {}
 	config.filtered_items = config.filtered_items or {}
-	config.enable_git_status = config.enable_git_status or global_config.enable_git_status
+	-- config.enable_git_status = config.enable_git_status or global_config.enable_git_status
 
 	config = vim.tbl_deep_extend("force", defaults, config)
 
 	-- Inherit missing settings from global config
 	local shared_config = {
+		"before_render",
+		"bind_to_cwd",
 		"enable_git_status",
-		"git_status_async",
 		"enable_diagnostics",
 		"enable_opened_markers",
 		"enable_modified_markers",
+		"git_status_async",
+		"use_libuv_file_watcher",
 	}
 	for _, key in ipairs(shared_config) do
 		if config[key] == nil then
@@ -325,6 +332,17 @@ M.setup = function(config, global_config)
 			end,
 		})
 	end
+
+	-- Apply config's modification to state
+	manager.subscribe(M.name, {
+		event = events.STATE_CREATED,
+		handler = function(state)
+			state.filtered_items = vim.deepcopy(config.filtered_items)
+			for _, key in ipairs(shared_config) do
+				state[key] = config[key]
+			end
+		end,
+	})
 end
 
 M.default_config = defaults
