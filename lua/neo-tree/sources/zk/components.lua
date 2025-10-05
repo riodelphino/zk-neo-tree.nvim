@@ -44,10 +44,7 @@ M.name = function(config, node, state)
 	end
 
 	if node.type == "file" then
-		local cached = state.zk.notes_cache and state.zk.notes_cache[node.path]
-		if cached and cached.title then
-			text = cached.title
-		end
+		text = state.extra.name_formatter(state.zk.notes_cache, node)
 	end
 
 	local hl_opened = config.highlight_opened_files

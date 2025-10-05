@@ -28,8 +28,19 @@ local config = {
 		},
 	},
 	extra = {
+      -- The fields fetched by `zk.api.list`
+		select = { "absPath", "title"},
+
+      ---Default name formatter
+      ---@param notes table cached notes by zk.api.list
+      ---@param node neotree.collections.ListNode
+		name_formatter = function(notes, node)
+   		local note = notes and notes[node.path]
+   		return note and note.title or node.name or nil
+      end,
+
 		---Default sort function (directory > title > filename)
-		---@param notes table
+		---@param notes table cached notes by zk.api.list
 		---@param a table
 		---@param b table
 		sorter = function(notes, a, b)
@@ -60,8 +71,6 @@ local config = {
 			-- 3. Both no title
 			return a.name:lower() < b.name:lower() -- Sort by filename
 		end,
-		name_formatter = function()end,
-		select = { "absPath", "title"},
 	},
 }
 
