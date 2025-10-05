@@ -15,8 +15,6 @@ local common = require("neo-tree.sources.common.components")
 
 local M = {}
 
-M.filtered_by = common.filtered_by -- INFO: Avoid error on next M.name. Add M.filtered_by before M.name. Is there any other solutions?
-
 M.name = function(config, node, state)
 	local highlight = config.highlight or highlights.FILE_NAME
 	local text = node.name
@@ -35,7 +33,7 @@ M.name = function(config, node, state)
 			text = text .. "  " .. icon
 		end
 	else
-		local filtered_by = M.filtered_by(config, node, state)
+		local filtered_by = common.filtered_by(config, node, state)
 		highlight = filtered_by.highlight or highlight
 		if config.use_git_status_colors then
 			local git_status = state.components.git_status({}, node, state)
