@@ -3,13 +3,14 @@
 
 local vim = vim
 local utils = require("neo-tree.utils")
-local renderer = require("neo-tree.ui.renderer")
-local items = require("neo-tree.sources.zk.lib.items")
 local events = require("neo-tree.events")
-local log = require("neo-tree.log")
-local manager = require("neo-tree.sources.manager")
 local git = require("neo-tree.git")
-local glob = require("neo-tree.sources.filesystem.lib.globtopattern")
+local log = require("neo-tree.log")
+local renderer = require("neo-tree.ui.renderer")
+local manager = require("neo-tree.sources.manager")
+local fs_glob = require("neo-tree.sources.filesystem.lib.globtopattern")
+local fs_watch = require("neo-tree.sources.filesystem.lib.fs_watch")
+local items = require("neo-tree.sources.zk.lib.items")
 local defaults = require("neo-tree.sources.zk.defaults")
 
 ---@class neotree.sources.filesystem : neotree.Source
@@ -174,9 +175,9 @@ M.setup = function(config, global_config)
 	config.filtered_items = config.filtered_items or {}
 	config.enable_git_status = config.enable_git_status or global_config.enable_git_status
 
-	config = vim.tbl_deep_extend("force", defaults, config) -- FIX: Is this right? or NOT NEEDED?
+	config = vim.tbl_deep_extend("force", defaults, config)
 
-	-- Merge source specific config on global config
+	-- Inherit missing settings from global config
 	local shared_config = {
 		"enable_git_status",
 		"git_status_async",
@@ -194,7 +195,7 @@ M.setup = function(config, global_config)
 		local list = config.filtered_items[key]
 		if type(list) == "table" then
 			for i, pattern in ipairs(list) do
-				list[i] = glob.globtopattern(pattern)
+				list[i] = fs_glob.globtopattern(pattern)
 			end
 		end
 	end
@@ -252,7 +253,7 @@ M.setup = function(config, global_config)
 			handler = wrap(manager.refresh),
 		})
 	else
-		require("neo-tree.sources.filesystem.lib.fs_watch").unwatch_all()
+		fs_watch.unwatch_all()
 		if global_config.enable_refresh_on_write then
 			manager.subscribe(M.name, {
 				event = events.VIM_BUFFER_CHANGED,
