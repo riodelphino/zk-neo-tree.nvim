@@ -84,7 +84,7 @@ local function sorter(state, a, b)
 	return a.name:lower() < b.name:lower() -- Sort by filename
 end
 
----Get and set zk items
+---Get zk items and show neo-tree
 ---@param state table neotree.State
 ---@param callback function?
 function M.scan(state, callback)
@@ -131,12 +131,12 @@ function M.scan(state, callback)
 		state.sort_function_override = state.zk.sorter
 		file_items.deep_sort(root.children, state.zk.sorter)
 
-		renderer.show_nodes({ root }, state, nil, callback)
-
-		state.loading = false
-		if type(callback) == "function" then
-			callback()
-		end
+		renderer.show_nodes({ root }, state, nil, function()
+			state.loading = false
+			if type(callback) == "function" then
+				callback()
+			end
+		end)
 	end)
 end
 
