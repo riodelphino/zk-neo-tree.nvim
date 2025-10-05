@@ -32,6 +32,7 @@ local function resolve_notebook_path(path)
 			path = cwd
 		end
 	end
+	log.trace("resolve_notebook_path: ", path)
 	-- at this point, the buffer either belongs to a notebook, or everything else failed
 	return path
 end
@@ -51,6 +52,7 @@ end
 ---@param state table neotree.State
 ---@param callback function?
 function M.scan(state, callback)
+	log.trace("scan: " .. state.path)
 	state.git_ignored = state.git_ignored or {}
 
 	local opts =
@@ -109,10 +111,13 @@ end
 ---@param path string?
 function M.get_zk(state, path, callback)
 	-- `state` keeps zk user/default config merged in its root.
+	log.trace("get_zk: ", path)
+
 	if state.loading then
 		return
 	end
 	state.loading = true
+
 	if not state.zk then
 		state.path = resolve_notebook_path(path)
 		state.zk = {

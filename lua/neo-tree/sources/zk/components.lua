@@ -15,6 +15,7 @@ local common = require("neo-tree.sources.common.components")
 
 local M = {}
 
+---@return neotree.Render.Node
 M.name = function(config, node, state)
 	local highlight = config.highlight or highlights.FILE_NAME
 	local text = node.name

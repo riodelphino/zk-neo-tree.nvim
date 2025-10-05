@@ -175,6 +175,7 @@ end
 ---@param config neotree.Config.Filesystem comes from the neo-tree's source specific option `{ zk = {...} }`
 ---@param global_config neotree.Config.Base comes from the neo-tree's base option
 M.setup = function(config, global_config)
+	log.trace(M.name .. ": setup")
 	config = config or {}
 	config.filtered_items = config.filtered_items or {}
 	-- config.enable_git_status = config.enable_git_status or global_config.enable_git_status
