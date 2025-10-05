@@ -3,53 +3,27 @@ local defaults = {
 	follow_current_file = {
 		enabled = true,
 	},
-	before_render = false, -- function(state) end,
+	before_render = false,
 	enable_git_status = true,
 	bind_to_cwd = true,
 	use_libuv_file_watcher = true,
 	filtered_items = {
-		visible = false, -- when true, they will just be displayed differently than normal items
+		always_show = {},
+		always_show_by_pattern = {},
 		hide_dotfiles = true,
 		hide_gitignored = true,
-		hide_hidden = true, -- only works on Windows for hidden files/directories
-		hide_by_name = {
-			--"node_modules"
-		},
-		hide_by_pattern = { -- uses glob style patterns
-			--"*.meta",
-			--"*/src/*/tsconfig.json",
-		},
-		always_show = { -- remains visible even if other settings would normally hide it
-			--".gitignored",
-		},
-		always_show_by_pattern = { -- uses glob style patterns
-			--".env*",
-		},
-		never_show = { -- remains hidden even if visible is toggled to true, this overrides always_show
-         "dir1", -- DEBUG:
-			--".DS_Store",
-			--"thumbs.db"
-		},
-		never_show_by_pattern = { -- uses glob style patterns
-			--".null-ls_*",
-		},
+		hide_hidden = true,
+		hide_by_name = {},
+		hide_by_pattern = {},
+		never_show = {},
+		never_show_by_pattern = {},
+		visible = false,
 	},
-	-- filtered_items = {
-	-- 	always_show = {},
-	-- 	always_show_by_pattern = {},
-	-- 	hide_by_name = {},
-	-- 	hide_by_pattern = {},
-	-- 	hide_dotfiles = true,
-	-- 	hide_gitignored = true,
-	-- 	hide_hidden = true,
-	-- 	never_show = {},
-	-- 	never_show_by_pattern = {},
-	-- 	visible = false,
-	-- },
 	window = {
 		mappings = {
+         -- zk source
 			["n"] = "change_query",
-			-- Additional keys from filesystem source
+			-- filesystem source
 			["H"] = "toggle_hidden",
 			["<bs>"] = "navigate_up",
 			["."] = "set_root",
