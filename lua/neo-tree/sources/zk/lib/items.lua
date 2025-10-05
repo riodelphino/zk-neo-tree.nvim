@@ -89,11 +89,11 @@ function M.scan(state, callback)
 		end
 
 		-- Sort
-		state.zk.sorter_wrapper = function(a, b)
+		local function sorter_wrapper(a, b)
 			return state.extra.sorter(state.zk.notes_cache, a, b) -- Wrap sorter to access notes_cache
 		end
 		-- state.sort_function_override = state.zk.sorter
-		file_items.deep_sort(root.children, state.zk.sorter_wrapper)
+		file_items.deep_sort(root.children, sorter_wrapper)
 
 		renderer.show_nodes({ root }, state, nil, function()
 			state.loading = false
