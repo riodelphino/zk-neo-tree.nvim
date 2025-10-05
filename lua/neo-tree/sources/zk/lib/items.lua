@@ -47,42 +47,6 @@ local function index_by_path(notes)
 	return tbl
 end
 
----Default sort function (directory > title > filename)
----@param state table neotree.State
----@param a table
----@param b table
-local function sorter(notes, a, b)
-	-- 1. Directories come first
-	if a.type == "directory" and b.type ~= "directory" then
-		return true
-	elseif a.type ~= "directory" and b.type == "directory" then
-		return false
-	elseif a.type == "directory" and b.type == "directory" then
-		return a.name:lower() < b.name:lower() -- Sort by directory name
-	end
-
-	-- Both are files
-	local a_note = notes[a.path]
-	local b_note = notes[b.path]
-	local a_title = a_note and a_note.title
-	local b_title = b_note and b_note.title
-
-	-- 2. Titles come second
-	if a_title and not b_title then
-		return true
-	elseif not a_title and b_title then
-		return false
-	elseif a_title and b_title then -- Sort by Title
-		if a_title:lower() == b_title:lower() then
-			return a.name:lower() < b.name:lower()
-		end
-		return a_title:lower() < b_title:lower()
-	end
-
-	-- 3. Both no title
-	return a.name:lower() < b.name:lower() -- Sort by filename
-end
-
 ---Get zk items and show neo-tree
 ---@param state table neotree.State
 ---@param callback function?
@@ -125,11 +89,11 @@ function M.scan(state, callback)
 		end
 
 		-- Sort
-		state.zk.sorter = function(a, b)
-			return sorter(state.zk.notes_cache, a, b) -- Wrap sorter to access notes_cache
+		state.zk.sorter_wrapper = function(a, b)
+			return state.extra.sorter(state.zk.notes_cache, a, b) -- Wrap sorter to access notes_cache
 		end
-		state.sort_function_override = state.zk.sorter
-		file_items.deep_sort(root.children, state.zk.sorter)
+		-- state.sort_function_override = state.zk.sorter
+		file_items.deep_sort(root.children, state.zk.sorter_wrapper)
 
 		renderer.show_nodes({ root }, state, nil, function()
 			state.loading = false

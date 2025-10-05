@@ -1,5 +1,4 @@
-
-local defaults = {
+local config = {
 	follow_current_file = {
 		enabled = true,
 	},
@@ -28,13 +27,42 @@ local defaults = {
 			["n"] = "change_query",
 		},
 	},
-   custom = {
-    name_formatter = function(note)
-    end,
-    sorter = function(state, a, b)
-    end,
-    select = { "absPath", "title"},
-   },
+	extra = {
+		---Default sort function (directory > title > filename)
+		---@param notes table
+		---@param a table
+		---@param b table
+		sorter = function(notes, a, b)
+			-- 1. Directories come first
+			if a.type == "directory" and b.type ~= "directory" then
+				return true
+			elseif a.type ~= "directory" and b.type == "directory" then
+				return false
+			elseif a.type == "directory" and b.type == "directory" then
+				return a.name:lower() < b.name:lower() -- Sort by directory name
+			end
+			-- Both are files
+			local a_note = notes[a.path]
+			local b_note = notes[b.path]
+			local a_title = a_note and a_note.title
+			local b_title = b_note and b_note.title
+			-- 2. Titles come second
+			if a_title and not b_title then
+				return true
+			elseif not a_title and b_title then
+				return false
+			elseif a_title and b_title then -- Sort by Title
+				if a_title:lower() == b_title:lower() then
+					return a.name:lower() < b.name:lower()
+				end
+				return a_title:lower() < b_title:lower()
+			end
+			-- 3. Both no title
+			return a.name:lower() < b.name:lower() -- Sort by filename
+		end,
+		name_formatter = function()end,
+		select = { "absPath", "title"},
+	},
 }
 
-return defaults
+return config
