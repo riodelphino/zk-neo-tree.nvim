@@ -51,7 +51,7 @@ end
 ---@param state table neotree.State
 ---@param a table
 ---@param b table
-local function sorter(state, a, b)
+local function sorter(notes, a, b)
 	-- 1. Directories come first
 	if a.type == "directory" and b.type ~= "directory" then
 		return true
@@ -62,10 +62,10 @@ local function sorter(state, a, b)
 	end
 
 	-- Both are files
-	local a_cache = state.zk.notes_cache[a.path]
-	local b_cache = state.zk.notes_cache[b.path]
-	local a_title = a_cache and a_cache.title
-	local b_title = b_cache and b_cache.title
+	local a_note = notes[a.path]
+	local b_note = notes[b.path]
+	local a_title = a_note and a_note.title
+	local b_title = b_note and b_note.title
 
 	-- 2. Titles come second
 	if a_title and not b_title then
@@ -126,7 +126,7 @@ function M.scan(state, callback)
 
 		-- Sort
 		state.zk.sorter = function(a, b)
-			return sorter(state, a, b) -- Wrap sorter to access state.zk.notes_cache
+			return sorter(state.zk.notes_cache, a, b) -- Wrap sorter to access notes_cache
 		end
 		state.sort_function_override = state.zk.sorter
 		file_items.deep_sort(root.children, state.zk.sorter)

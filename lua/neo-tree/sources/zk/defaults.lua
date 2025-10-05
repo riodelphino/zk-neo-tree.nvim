@@ -28,6 +28,13 @@ local defaults = {
 			["n"] = "change_query",
 		},
 	},
+   custom = {
+    name_formatter = function(note)
+    end,
+    sorter = function(state, a, b)
+    end,
+    select = { "absPath", "title"},
+   },
 }
 
 return defaults
