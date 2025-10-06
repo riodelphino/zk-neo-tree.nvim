@@ -258,7 +258,7 @@ M.setup = function(config, global_config)
 	if config.use_libuv_file_watcher then
 		manager.subscribe(M.name, {
 			event = events.FS_EVENT,
-			handler = wrap(manager.refresh),
+			handler = wrap(manager.refresh, M.name),
 		})
 	else
 		fs_watch.unwatch_all()
@@ -269,24 +269,13 @@ M.setup = function(config, global_config)
 					local afile = arg.afile or ""
 					if utils.is_real_file(afile) then
 						log.trace("refreshing due to vim_buffer_changed event: ", afile)
-						manager.refresh("filesystem")
+						manager.refresh(M.name)
 					else
 						log.trace("Ignoring vim_buffer_changed event for non-file: ", afile)
 					end
 				end,
 			})
 		end
-	end
-
-	if global_config.enable_refresh_on_write then
-		manager.subscribe(M.name, {
-			event = events.VIM_BUFFER_CHANGED,
-			handler = function(args)
-				if utils.is_real_file(args.afile) then
-					manager.refresh(M.name)
-				end
-			end,
-		})
 	end
 
 	--Configure event handlers for cwd changes
