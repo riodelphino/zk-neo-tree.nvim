@@ -171,15 +171,12 @@ M.refresh = function()
 end
 
 ---Configures the plugin, should be called before the plugin is used.
-
----@param config neotree.Config.Filesystem comes from the neo-tree's source specific option `{ zk = {...} }`
----@param global_config neotree.Config.Base comes from the neo-tree's base option
+---@param config neotree.Config.Filesystem source specific options in `{ zk = { ... } }`
+---@param global_config neotree.Config.Base global options
 M.setup = function(config, global_config)
 	log.trace(M.name .. ": setup")
 	config = config or {}
 	config.filtered_items = config.filtered_items or {}
-	-- config.enable_git_status = config.enable_git_status or global_config.enable_git_status
-
 	config = vim.tbl_deep_extend("force", defaults, config)
 
 	-- Inherit missing settings from global config
@@ -190,6 +187,7 @@ M.setup = function(config, global_config)
 		"enable_diagnostics",
 		"enable_opened_markers",
 		"enable_modified_markers",
+		"enable_refresh_on_write",
 		"git_status_async",
 		"use_libuv_file_watcher",
 	}
@@ -262,7 +260,7 @@ M.setup = function(config, global_config)
 		})
 	else
 		fs_watch.unwatch_all()
-		if global_config.enable_refresh_on_write then
+		if config.enable_refresh_on_write then
 			manager.subscribe(M.name, {
 				event = events.VIM_BUFFER_CHANGED,
 				handler = function(arg)
@@ -302,6 +300,7 @@ M.setup = function(config, global_config)
 		})
 	end
 
+	--Configure event handlers for opened markers
 	if config.enable_opened_markers then
 		for _, event in ipairs({ events.VIM_BUFFER_ADDED, events.VIM_BUFFER_DELETED }) do
 			manager.subscribe(M.name, {
@@ -323,14 +322,11 @@ M.setup = function(config, global_config)
 		})
 	end
 
-	-- Apply config's modification to state
+	-- Save config's modification into state
 	manager.subscribe(M.name, {
 		event = events.STATE_CREATED,
 		handler = function(state)
-			state.filtered_items = vim.deepcopy(config.filtered_items)
-			for _, key in ipairs(shared_config) do
-				state[key] = config[key]
-			end
+			state = vim.tbl_deep_extend("force", state, config)
 		end,
 	})
 end
