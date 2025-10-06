@@ -208,12 +208,13 @@ M.setup = function(config, global_config)
 				end
 			end,
 		})
-	elseif global_config.enable_git_status and global_config.git_status_async then
-		manager.subscribe(M.name, {
-			event = events.GIT_STATUS_CHANGED,
-			handler = wrap(manager.git_status_changed),
-		})
 	elseif config.enable_git_status then
+		if global_config.git_status_async then
+			manager.subscribe(M.name, {
+				event = events.GIT_STATUS_CHANGED,
+				handler = wrap(manager.git_status_changed),
+			})
+		end
 		manager.subscribe(M.name, {
 			event = events.BEFORE_RENDER,
 			handler = function(state)
