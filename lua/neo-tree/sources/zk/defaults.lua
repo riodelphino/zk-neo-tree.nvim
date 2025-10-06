@@ -5,12 +5,15 @@ local config = {
 	before_render = false,
 	bind_to_cwd = true,
 	enable_git_status = true,
-	enable_diagnostics = true,
-	enable_opened_markers = true,
-	enable_modified_markers = true,
-   enable_refresh_on_write = true,
-	git_status_async = true,
-	use_libuv_file_watcher = true,
+
+   -- FIX: REMOVE THEM
+   --
+	-- enable_diagnostics = true,
+	-- enable_opened_markers = true,
+	-- enable_modified_markers = true,
+   -- enable_refresh_on_write = true,
+	-- git_status_async = true,
+	-- use_libuv_file_watcher = true,
 	filtered_items = {
 		always_show = {}, -- NOT WORKS
 		always_show_by_pattern = {}, -- NOT WORKS

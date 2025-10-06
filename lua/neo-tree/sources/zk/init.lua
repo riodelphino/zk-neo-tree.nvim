@@ -179,17 +179,20 @@ M.setup = function(config, global_config)
 	config.filtered_items = config.filtered_items or {}
 	config = vim.tbl_deep_extend("force", defaults, config)
 
-	-- Inherit missing settings from global config
+	-- Inherit missing settings from global_config
 	local shared_config = {
 		"before_render",
 		"bind_to_cwd",
 		"enable_git_status",
-		"enable_diagnostics",
-		"enable_opened_markers",
-		"enable_modified_markers",
-		"enable_refresh_on_write",
-		"git_status_async",
 		"use_libuv_file_watcher",
+
+		-- NOTE: REMOVE THEM: Should use global config for below
+		--
+		-- "enable_diagnostics",
+		-- "enable_opened_markers",
+		-- "enable_modified_markers",
+		-- "enable_refresh_on_write",
+		-- "git_status_async",
 	}
 	for _, key in ipairs(shared_config) do
 		if config[key] == nil then
@@ -225,7 +228,7 @@ M.setup = function(config, global_config)
 				end
 			end,
 		})
-	elseif config.enable_git_status and config.git_status_async then
+	elseif global_config.enable_git_status and global_config.git_status_async then
 		manager.subscribe(M.name, {
 			event = events.GIT_STATUS_CHANGED,
 			handler = wrap(manager.git_status_changed),
@@ -283,7 +286,7 @@ M.setup = function(config, global_config)
 	end
 
 	--Configure event handlers for disgnostics
-	if config.enable_diagnostics then
+	if global_config.enable_diagnostics then
 		manager.subscribe(M.name, {
 			event = events.STATE_CREATED,
 			handler = function(state)
@@ -305,7 +308,7 @@ M.setup = function(config, global_config)
 	end
 
 	--Configure event handlers for opened markers
-	if config.enable_opened_markers then
+	if global_config.enable_opened_markers then
 		for _, event in ipairs({ events.VIM_BUFFER_ADDED, events.VIM_BUFFER_DELETED }) do
 			manager.subscribe(M.name, {
 				event = event,
@@ -320,7 +323,7 @@ M.setup = function(config, global_config)
 			event = events.VIM_BUFFER_ENTER,
 			handler = function(args)
 				if utils.is_real_file(args.afile) then
-					wrap(M.follow)
+					M.follow()
 				end
 			end,
 		})
