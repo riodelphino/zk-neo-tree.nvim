@@ -282,8 +282,14 @@ M.setup = function(config, global_config)
 		})
 	end
 
-	--Configure event handlers for lsp diagnostic updates
+	--Configure event handlers for disgnostics
 	if config.enable_diagnostics then
+		manager.subscribe(M.name, {
+			event = events.STATE_CREATED,
+			handler = function(state)
+				state.diagnostics_lookup = utils.get_diagnostic_counts()
+			end,
+		})
 		manager.subscribe(M.name, {
 			event = events.VIM_DIAGNOSTIC_CHANGED,
 			handler = wrap(manager.diagnostics_changed),
