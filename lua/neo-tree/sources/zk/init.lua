@@ -246,9 +246,7 @@ M.setup = function(config, global_config)
 	if config.enable_git_status then
 		manager.subscribe(M.name, {
 			event = events.GIT_EVENT,
-			handler = function()
-				manager.refresh(M.name)
-			end,
+			handler = wrap(manager.refresh, M.name),
 		})
 	end
 
@@ -267,7 +265,7 @@ M.setup = function(config, global_config)
 					local afile = arg.afile or ""
 					if utils.is_real_file(afile) then
 						log.trace("refreshing due to vim_buffer_changed event: ", afile)
-						manager.refresh(M.name)
+						wrap(manager.refresh, M.name)
 					else
 						log.trace("Ignoring vim_buffer_changed event for non-file: ", afile)
 					end
@@ -316,7 +314,7 @@ M.setup = function(config, global_config)
 			event = events.VIM_BUFFER_ENTER,
 			handler = function(args)
 				if utils.is_real_file(args.afile) then
-					M.follow()
+					wrap(M.follow)
 				end
 			end,
 		})
