@@ -8,6 +8,7 @@ local config = {
 	enable_diagnostics = true,
 	enable_opened_markers = true,
 	enable_modified_markers = true,
+   enable_refresh_on_write = true,
 	git_status_async = true,
 	use_libuv_file_watcher = true,
 	filtered_items = {
