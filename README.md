@@ -56,7 +56,7 @@ require("neo-tree").setup({
 
 zk-specific config:
 ```lua
--- FIX: Should remove unavailable config and above warning.
+-- FIX: Should remove unavailable config and above warning. or, merge with filesystem items (difficult)
 {
   follow_current_file = {
     enabled = true,
@@ -64,15 +64,6 @@ zk-specific config:
   before_render = false, -- function(state) end,
   bind_to_cwd = true, -- Follow cwd changes
   enable_git_status = true, -- Show git status markers and highlights
-
-  -- FIX: REMOVE THEM
-  --
-  -- enable_diagnostics = true, -- Catch the lsp diagnostic updates
-  -- enable_opened_markers = true, -- Show opened markers
-  -- enable_modified_markers = true, -- Show modified markers
-  -- enable_refresh_on_write = true, -- Refresh on saving a file
-  -- git_status_async = true,
-  -- use_libuv_file_watcher = true,
   filtered_items = {
     always_show = { -- NOT WORKS / remains visible even if other settings would normally hide it
       --".gitignored",

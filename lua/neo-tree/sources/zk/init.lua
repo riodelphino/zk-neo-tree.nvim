@@ -176,30 +176,9 @@ end
 M.setup = function(config, global_config)
 	log.trace(M.name .. ": setup")
 	config = config or {}
-	config.filtered_items = config.filtered_items or {}
 	config = vim.tbl_deep_extend("force", defaults, config)
 
-	-- Inherit missing settings from global_config
-	local shared_config = {
-		"before_render",
-		"bind_to_cwd",
-		"enable_git_status",
-		"use_libuv_file_watcher",
-
-		-- NOTE: REMOVE THEM: Should use global config for below
-		--
-		-- "enable_diagnostics",
-		-- "enable_opened_markers",
-		-- "enable_modified_markers",
-		-- "enable_refresh_on_write",
-		-- "git_status_async",
-	}
-	for _, key in ipairs(shared_config) do
-		if config[key] == nil then
-			config[key] = global_config[key]
-		end
-	end
-
+	-- Convert patterns to Lua patterns
 	for _, key in ipairs({ "hide_by_pattern", "always_show_by_pattern", "never_show_by_pattern" }) do
 		local list = config.filtered_items[key]
 		if type(list) == "table" then
@@ -209,6 +188,7 @@ M.setup = function(config, global_config)
 		end
 	end
 
+	-- Convert certain lists to dictionaries for faster lookup
 	for _, key in ipairs({ "hide_by_name", "always_show", "never_show" }) do
 		local list = config.filtered_items[key]
 		if type(list) == "table" then
