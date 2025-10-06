@@ -3,15 +3,15 @@
 
 local vim = vim
 local utils = require("neo-tree.utils")
-local events = require("neo-tree.events")
-local git = require("neo-tree.git")
-local log = require("neo-tree.log")
 local renderer = require("neo-tree.ui.renderer")
+local items = require("neo-tree.sources.zk.lib.items")
+local events = require("neo-tree.events")
 local manager = require("neo-tree.sources.manager")
+local git = require("neo-tree.git")
 local fs_glob = require("neo-tree.sources.filesystem.lib.globtopattern")
 local fs_watch = require("neo-tree.sources.filesystem.lib.fs_watch")
-local items = require("neo-tree.sources.zk.lib.items")
 local defaults = require("neo-tree.sources.zk.defaults")
+local log = require("neo-tree.log")
 
 ---@class neotree.sources.filesystem : neotree.Source
 local M = {
@@ -298,7 +298,7 @@ M.setup = function(config, global_config)
 		end
 	end
 
-	-- Configure event handler for follow_current_file option
+	--Configure event handler for follow_current_file option
 	if config.follow_current_file.enabled then
 		manager.subscribe(M.name, {
 			event = events.VIM_BUFFER_ENTER,
@@ -310,7 +310,7 @@ M.setup = function(config, global_config)
 		})
 	end
 
-	-- Save config's modification into state
+	--Save config's modification into state
 	manager.subscribe(M.name, {
 		event = events.STATE_CREATED,
 		handler = function(state)
