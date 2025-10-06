@@ -67,6 +67,7 @@ zk-specific config:
   enable_diagnostics = true, -- Catch the lsp diagnostic updates
   enable_opened_markers = true, -- Show opened markers
   enable_modified_markers = true, -- Show modified markers
+  enable_refresh_on_write = true, -- Refresh on saving a file
   git_status_async = true,
   use_libuv_file_watcher = true,
   filtered_items = {
@@ -111,8 +112,7 @@ zk-specific config:
     ---Default name formatter
     ---@param notes table cached notes by zk.api.list
     ---@param node neotree.collections.ListNode
-    name_formatter = function(notes, node)
-      local note = notes and notes[node.path]
+    name_formatter = function(note, node)
       return note and note.title or node.name or nil
     end,
 
