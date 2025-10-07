@@ -1,4 +1,5 @@
 local vim = vim
+local uv = vim.uv or vim.loop
 local renderer = require("neo-tree.ui.renderer")
 local file_items = require("neo-tree.sources.common.file-items")
 local log = require("neo-tree.log")
@@ -53,13 +54,13 @@ end
 ---@param path string
 ---@param zk_notes table
 function M.scan_none_zk_items(context, path, zk_notes)
-	local handle = vim.loop.fs_scandir(path)
+	local handle = uv.fs_scandir(path)
 	if not handle then
 		return
 	end
 
 	while true do
-		local name, type = vim.loop.fs_scandir_next(handle)
+		local name, type = uv.fs_scandir_next(handle)
 		if not name then
 			break
 		end
