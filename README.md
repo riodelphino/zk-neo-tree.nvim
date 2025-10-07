@@ -127,31 +127,42 @@ zk-specific config:
     ---@param a table
     ---@param b table
     sorter = function(notes, a, b)
+      local a_hidden = string.sub(a.name, 1, 1) == "."
+      local b_hidden = string.sub(b.name, 1, 1) == "."
+
       -- 1. Directories come first
       if a.type == "directory" and b.type ~= "directory" then
         return true
       elseif a.type ~= "directory" and b.type == "directory" then
         return false
       elseif a.type == "directory" and b.type == "directory" then
+        if not a_hidden and b_hidden then -- Sort by none-hidden -> hidden
+          return true
+        elseif a_hidden and not b_hidden then
+          return false
+        end
         return a.name:lower() < b.name:lower() -- Sort by directory name
       end
-      -- Both are files
+
+      -- 2. Files with titles come first
       local a_note = notes[a.path]
       local b_note = notes[b.path]
       local a_title = a_note and a_note.title
       local b_title = b_note and b_note.title
-      -- 2. Titles come second
       if a_title and not b_title then
         return true
       elseif not a_title and b_title then
         return false
-      elseif a_title and b_title then -- Sort by Title
-        if a_title:lower() == b_title:lower() then
-          return a.name:lower() < b.name:lower()
-        end
-        return a_title:lower() < b_title:lower()
+      elseif a_title and b_title then
+        return a_title:lower() < b_title:lower() -- Sort by title
       end
-      -- 3. Both no title
+
+      -- 3. Files without titles come last
+      if not a_hidden and b_hidden then -- Sort by none-hidden -> hidden
+        return true
+      elseif a_hidden and not b_hidden then
+        return false
+      end
       return a.name:lower() < b.name:lower() -- Sort by filename
     end,
   },
