@@ -103,9 +103,6 @@ zk-specific config:
     -- Scan also none-zk files and directories (e.g. ".zk/", dotfiles, empty directories, "*.jpg", e.t.c.)
     scan_none_zk_items = true, -- FIX: Should be here or root?
 
-    -- Merge filesystem source commands
-    merge_filesystem_commands = true,
-
     -- The fields fetched by `zk.api.list`
     select = { "absPath", "title"},
 

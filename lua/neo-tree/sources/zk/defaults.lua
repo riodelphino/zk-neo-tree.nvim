@@ -24,7 +24,6 @@ local config = {
 	},
 	extra = {
 		scan_none_zk_items = true,
-		merge_filesystem_commands = true,
 
 		-- The fields fetched by `zk.api.list`
 		select = { "absPath", "title"},

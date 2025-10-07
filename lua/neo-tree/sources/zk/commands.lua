@@ -165,14 +165,6 @@ M.toggle_gitignore = function(state)
 	M.toggle_hidden(state)
 end
 
--- M = vim.tbl_deep_extend("keep", M, fs_commands) -- Also including 'common.commands'
-M.add_fs_commands = function(state)
-	if state.extra.merge_filesystem_commands then
-		local commands = require("neo-tree.sources.zk.commands")
-		-- commands = vim.tbl_deep_extend("keep", commands, fs_commands) -- Also including 'common.commands'
-		commands = vim.tbl_deep_extend("force", fs_commands, commands) -- Also including 'common.commands'
-		vim.notify("add_fs_commands called: ", vim.log.levels.INFO)
-	end
-end
+M = vim.tbl_deep_extend("keep", M, fs_commands) -- Also including 'common.commands'
 
 return M

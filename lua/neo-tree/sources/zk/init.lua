@@ -10,7 +10,6 @@ local manager = require("neo-tree.sources.manager")
 local git = require("neo-tree.git")
 local fs_glob = require("neo-tree.sources.filesystem.lib.globtopattern")
 local fs_watch = require("neo-tree.sources.filesystem.lib.fs_watch")
--- local commands = require("neo-tree.sources.zk.commands")
 local defaults = require("neo-tree.sources.zk.defaults")
 local log = require("neo-tree.log")
 
@@ -314,8 +313,6 @@ M.setup = function(config, global_config)
 		event = events.STATE_CREATED,
 		handler = function(state)
 			state = vim.tbl_deep_extend("force", state, config)
-			local commands = require("neo-tree.sources.zk.commands")
-			commands.add_fs_commands(state)
 		end,
 	})
 end
