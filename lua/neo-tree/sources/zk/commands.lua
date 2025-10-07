@@ -19,6 +19,8 @@ end
 
 local refresh = utils.wrap(manager.refresh, "zk")
 
+---Change the query dynamically
+---@param state neotree.sources.filesystem.State
 M.change_query = function(state)
 	local tree = state.tree
 	local node = tree:get_node()
@@ -77,8 +79,10 @@ local function show_only_explicitly_opened(state, eod, path_to_reveal)
 	end
 end
 
+---Create a directory recursively
+---@param path string
 local function mkdir_p(path)
-	local create_all_as_folders
+	local create_all_as_folders -- DEBUG: NEED IT? Can be removed, I guess.
 	function create_all_as_folders(in_path)
 		if not uv.fs_stat(in_path) then
 			local parent, _ = utils.split_path(in_path)
@@ -92,6 +96,8 @@ local function mkdir_p(path)
 	create_all_as_folders(path)
 end
 
+---Add new note
+---@param state neotree.sources.filesystem.State
 M.add = function(state)
 	local tree = state.tree
 	local node = get_folder_node(tree)
@@ -105,14 +111,14 @@ M.add = function(state)
 		if input then
 			local dir_ = vim.fn.fnamemodify(input, ":h")
 			if dir_ ~= "." then
-				if dir == "" then
+				if dir == "" then -- DEBUG: ここら辺なにやってるかわからん
 					dir = dir_
 				else
 					dir = dir .. utils.path_separator .. dir_
 				end
 			end
 			local title = vim.fn.fnamemodify(input, ":t")
-			mkdir_p(state.path .. utils.path_separator .. dir)
+			mkdir_p(state.path .. utils.path_separator .. dir) -- DEBUG: うーん、そうじゃない。title に dir は含めないよ。config.toml を参照しようよ〜
 			require("zk.api").new(state.path, {
 				title = title,
 				dir = dir,
@@ -131,6 +137,8 @@ M.add = function(state)
 	end)
 end
 
+---Delete selected item
+---@param state neotree.sources.filesystem.State
 M.delete = function(state)
 	local tree = state.tree
 	local node = tree:get_node()
