@@ -23,23 +23,26 @@ local config = {
 		},
 	},
 	extra = {
-      -- The fields fetched by `zk.api.list`
+		scan_none_zk_items = true,
+		merge_filesystem_commands = true,
+
+		-- The fields fetched by `zk.api.list`
 		select = { "absPath", "title"},
 
-      ---Default name formatter
-      ---@param note table? single cached note by zk.api.list
-      ---@param node neotree.collections.ListNode
+		---Default name formatter
+		---@param note table? single cached note by zk.api.list
+		---@param node neotree.collections.ListNode
 		name_formatter = function(note, node)
-   		return note and note.title or node.name or nil
-      end,
+			return note and note.title or node.name or nil
+		end,
 
-      ---Additional customizer for neotree.Render.Node table
-      ---@param rendere_nodes neotree.Render.Node[]
-      ---@param note table? single cached note by zk.api.list
-      ---@param node neotree.collections.ListNode
-      name_extra_renderer = function(rendere_nodes, note, node)
-         return rendere_nodes
-      end,
+		---Additional customizer for neotree.Render.Node table
+		---@param rendere_nodes neotree.Render.Node[]
+		---@param note table? single cached note by zk.api.list
+		---@param node neotree.collections.ListNode
+		name_extra_renderer = function(rendere_nodes, note, node)
+			return rendere_nodes
+		end,
 
 		---Default sort function (directory > title > filename)
 		---@param notes table cached notes by zk.api.list

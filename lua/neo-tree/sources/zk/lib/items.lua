@@ -48,6 +48,34 @@ local function index_by_path(notes)
 	return tbl
 end
 
+---Recursively list all files and directories in the path (including hidden and non-Zk items)
+---@param context neotree.FileItemContext
+---@param path string
+---@param zk_notes table
+function M.scan_none_zk_items(context, path, zk_notes)
+	local handle = vim.loop.fs_scandir(path)
+	if not handle then
+		return
+	end
+
+	while true do
+		local name, type = vim.loop.fs_scandir_next(handle)
+		if not name then
+			break
+		end
+		local fullpath = path .. "/" .. name
+		if not zk_notes[fullpath] then
+			local success, item = pcall(file_items.create_item, context, fullpath, type)
+			if not success then
+				log.error("Error creating item for " .. fullpath .. ": " .. item)
+			end
+		end
+		if type == "directory" then
+			M.scan_none_zk_items(context, fullpath, zk_notes)
+		end
+	end
+end
+
 ---Get zk items and show neo-tree
 ---@param state table neotree.State
 ---@param callback function?
@@ -66,20 +94,28 @@ function M.scan(state, callback)
 
 		state.zk.notes_cache = index_by_path(notes)
 
+		---@type neotree.FileItemContext
 		local context = file_items.create_context(state)
 
+		---@type neotree.FileItem
 		local root = file_items.create_item(context, state.path, "directory")
+		---@cast root neotree.FileItem.Directory
 		root.id = state.path
 		root.name = vim.fn.fnamemodify(state.path, ":~")
 		root.search_pattern = state.search_pattern
 		context.folders[root.path] = root
 
-		-- Create items from zk notes
+		-- Create items for zk notes
 		for _, note in pairs(notes) do
 			local success, item = pcall(file_items.create_item, context, note.absPath, "file")
 			if not success then
 				log.error("Error creating item for " .. note.absPath .. ": " .. item)
 			end
+		end
+
+		-- Create items for none-zk files and directories
+		if state.extra.scan_none_zk_items then
+			M.scan_none_zk_items(context, state.path, state.zk.notes_cache)
 		end
 
 		-- Set expanded nodes

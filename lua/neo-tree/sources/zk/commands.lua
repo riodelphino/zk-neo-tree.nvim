@@ -12,11 +12,12 @@ local scan = require("neo-tree.sources.zk.lib.items").scan
 local M = {}
 
 M.name = "zk"
-local refresh = utils.wrap(manager.refresh, "zk")
 
 local function format_item(item)
 	return item.desc
 end
+
+local refresh = utils.wrap(manager.refresh, "zk")
 
 M.change_query = function(state)
 	local tree = state.tree
@@ -149,9 +150,29 @@ end
 
 -- TODO: delete_note_visual
 
-M.refresh = refresh
+---Toggles whether hidden files are shown or not.
+---@param state neotree.sources.filesystem.State
+M.toggle_hidden = function(state)
+	state.filtered_items.visible = not state.filtered_items.visible
+	log.info("Toggling hidden files: " .. tostring(state.filtered_items.visible))
+	refresh()
+end
 
--- cc._add_common_commands(M)
-M = vim.tbl_deep_extend("keep", M, fs_commands) -- Also including 'common.commands'
+---Toggles whether the tree is filtered by gitignore or not.
+---@param state neotree.sources.filesystem.State
+M.toggle_gitignore = function(state)
+	log.warn("`toggle_gitignore` has been removed, running toggle_hidden instead.")
+	M.toggle_hidden(state)
+end
+
+-- M = vim.tbl_deep_extend("keep", M, fs_commands) -- Also including 'common.commands'
+M.add_fs_commands = function(state)
+	if state.extra.merge_filesystem_commands then
+		local commands = require("neo-tree.sources.zk.commands")
+		-- commands = vim.tbl_deep_extend("keep", commands, fs_commands) -- Also including 'common.commands'
+		commands = vim.tbl_deep_extend("force", fs_commands, commands) -- Also including 'common.commands'
+		vim.notify("add_fs_commands called: ", vim.log.levels.INFO)
+	end
+end
 
 return M
