@@ -23,7 +23,8 @@
          "${3rd}/busted",
          "${3rd}/luv",
          "$VIMRUNTIME",
-         "${HOME}/.local/share/nvim/lazy/neo-tree.nvim/lua",
+         "$HOME/.local/share/nvim/lazy/nui.nvim/lua/nui/tree",
+         "$HOME/.local/share/nvim/lazy/neo-tree.nvim/lua",
          "$PWD/../neo-tree.nvim/lua"
       ],
       "ignoreDir": [

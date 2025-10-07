@@ -30,7 +30,7 @@ local config = {
 
 		---Default name formatter
 		---@param note table? single cached note by zk.api.list
-		---@param node neotree.collections.ListNode
+		---@param node NuiTree.Node
 		name_formatter = function(note, node)
 			return note and note.title or node.name or nil
 		end,

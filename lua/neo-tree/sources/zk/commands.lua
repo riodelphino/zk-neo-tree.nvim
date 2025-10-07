@@ -41,7 +41,7 @@ end
 -- copied from neo-tree/sources/common/commands.lua
 ---Gets the node parent folder recursively
 ---@param tree table to look for nodes
----@param node table to look for folder parent
+---@param node table? to look for folder parent
 ---@return table table
 local function get_folder_node(tree, node)
 	if not node then
