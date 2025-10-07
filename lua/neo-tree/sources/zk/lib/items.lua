@@ -77,18 +77,6 @@ function M.scan_none_zk_items(context, path, notes_cache, folders_cache, root)
 					item.filtered_by = { name = true } -- TODO: Using `hide_by_name` to hide unlisted folders is correct?
 				end
 			end
-			-- Hide if the parent is hidden
-			print("item.parent_path: " .. item.parent_path) -- DEBUG:
-			print("name: " .. vim.inspect(name)) -- DEBUG:
-			if item.parent_path ~= "/Users/rio/Projects/terminal/test" then -- DEBUG: ルートではないなら、の条件にすること
-				-- print("context.all_items: " .. vim.inspect(context.all_items)) -- DEBUG:
-				-- local parent = context.all_items[item.parent_path]
-				local parent = root.children[item.parent_path]
-				if parent and parent.filtered_by then
-					print("parent あった") -- DEBUG:
-					item.filtered_by.parent = { parent = parent.filtered_by.parent }
-				end
-			end
 		end
 		if type == "directory" then
 			M.scan_none_zk_items(context, fullpath, notes_cache, folders_cache, root)
@@ -135,15 +123,11 @@ function M.scan(state, callback)
 			end
 			state.zk.folders_cache[item.parent_path] = true
 		end
-		-- print("state (before): " .. vim.inspect(state)) -- DEBUG:
 
 		-- Create items for none-zk files and directories
 		if state.extra.scan_none_zk_items then
 			M.scan_none_zk_items(context, state.path, state.zk.notes_cache, state.zk.folders_cache, root)
 		end
-		-- print("state (after): " .. vim.inspect(state)) -- DEBUG:
-		-- print("context (after): " .. vim.inspect(context)) -- DEBUG:
-		-- print("root.children: " .. vim.inspect(root.children)) -- DEBUG:
 
 		-- Set expanded nodes
 		state.default_expanded_nodes = {}
