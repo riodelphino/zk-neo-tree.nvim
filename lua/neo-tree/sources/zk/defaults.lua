@@ -43,48 +43,39 @@ local config = {
 			return rendere_nodes
 		end,
 
-		---Default sort function (directory > title > filename)
+		---Default sort function
 		---@param notes table cached notes by zk.api.list
 		---@param a table
 		---@param b table
 		sorter = function(notes, a, b)
+			-- 1. Sort by directories -> files
+			if a.type ~= b.type then
+				return a.type == "directory"
+         end
+
+         -- 2. Sort by none-hidden -> hidden
 			local a_hidden = string.sub(a.name, 1, 1) == "."
 			local b_hidden = string.sub(b.name, 1, 1) == "."
-
-			-- 1. Directories come first
-			if a.type == "directory" and b.type ~= "directory" then
-				return true
-			elseif a.type ~= "directory" and b.type == "directory" then
-				return false
-			elseif a.type == "directory" and b.type == "directory" then
-				if not a_hidden and b_hidden then -- Sort by none-hidden -> hidden
-					return true
-				elseif a_hidden and not b_hidden then
-					return false
-				end
-				return a.name:lower() < b.name:lower() -- Sort by directory name
+			if a_hidden ~= b_hidden then
+				return not a_hidden
 			end
 
-			-- 2. Files with titles come first
-			local a_note = notes[a.path]
-			local b_note = notes[b.path]
-			local a_title = a_note and a_note.title
-			local b_title = b_note and b_note.title
-			if a_title and not b_title then
-				return true
-			elseif not a_title and b_title then
-				return false
-			elseif a_title and b_title then
-				return a_title:lower() < b_title:lower() -- Sort by title
+			-- 3. Sort by titled files -> untitled files
+			local a_title = notes[a.path] and notes[a.path].title
+			local b_title = notes[b.path] and notes[b.path].title
+			local a_has_title = a_title and a_title ~= ""
+			local b_has_title = b_title and b_title ~= ""
+			if a_has_title ~= b_has_title then
+				return a_has_title
 			end
 
-			-- 3. Files without titles come last
-			if not a_hidden and b_hidden then -- Sort by none-hidden -> hidden
-				return true
-			elseif a_hidden and not b_hidden then
-				return false
+         -- Sort by title
+			if a_has_title and b_has_title then
+				return a_title:lower() < b_title:lower()
 			end
-			return a.name:lower() < b.name:lower() -- Sort by filename
+
+         -- Sort by name
+			return a.name:lower() < b.name:lower()
 		end,
 	},
 }
