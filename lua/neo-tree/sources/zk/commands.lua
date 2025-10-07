@@ -20,7 +20,7 @@ end
 local refresh = utils.wrap(manager.refresh, "zk")
 
 ---Change the query dynamically
----@param state neotree.sources.filesystem.State
+---@param state neotree.sources.zk.State
 M.change_query = function(state)
 	local tree = state.tree
 	local node = tree:get_node()
@@ -97,7 +97,7 @@ local function mkdir_p(path)
 end
 
 ---Add new note
----@param state neotree.sources.filesystem.State
+---@param state neotree.sources.zk.State
 M.add = function(state)
 	local tree = state.tree
 	local node = get_folder_node(tree)
@@ -138,7 +138,7 @@ M.add = function(state)
 end
 
 ---Delete selected item
----@param state neotree.sources.filesystem.State
+---@param state neotree.sources.zk.State
 M.delete = function(state)
 	local tree = state.tree
 	local node = tree:get_node()
@@ -159,7 +159,7 @@ end
 -- TODO: delete_note_visual
 
 ---Toggles whether hidden files are shown or not.
----@param state neotree.sources.filesystem.State
+---@param state neotree.sources.zk.State
 M.toggle_hidden = function(state)
 	state.filtered_items.visible = not state.filtered_items.visible
 	log.info("Toggling hidden files: " .. tostring(state.filtered_items.visible))
@@ -167,7 +167,7 @@ M.toggle_hidden = function(state)
 end
 
 ---Toggles whether the tree is filtered by gitignore or not.
----@param state neotree.sources.filesystem.State
+---@param state neotree.sources.zk.State
 M.toggle_gitignore = function(state)
 	log.warn("`toggle_gitignore` has been removed, running toggle_hidden instead.")
 	M.toggle_hidden(state)

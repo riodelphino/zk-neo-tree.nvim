@@ -2,6 +2,7 @@
 --or read the state of this source.
 
 local vim = vim
+local uv = vim.uv or vim.loop
 local utils = require("neo-tree.utils")
 local renderer = require("neo-tree.ui.renderer")
 local items = require("neo-tree.sources.zk.lib.items")
@@ -13,21 +14,26 @@ local fs_watch = require("neo-tree.sources.filesystem.lib.fs_watch")
 local defaults = require("neo-tree.sources.zk.defaults")
 local log = require("neo-tree.log")
 
----@class neotree.sources.filesystem : neotree.Source
+---@class neotree.sources.zk : neotree.Source
 local M = {
 	name = "zk",
 	display_name = " 󰉓 zk ",
 }
 
+---@param func function
 local wrap = function(func)
 	return utils.wrap(func, M.name)
 end
 
----@return neotree.sources.filesystem.State
+---@return neotree.sources.zk.State
 local get_state = function(tabid)
-	return manager.get_state(M.name, tabid) --[[@as neotree.sources.filesystem.State]]
+	return manager.get_state(M.name, tabid) --[[@as neotree.sources.zk.State]]
 end
 
+---Follow internal
+---@param callback function?
+---@param force_show boolean
+---@param async boolean?
 local follow_internal = function(callback, force_show, async)
 	log.trace("follow called")
 	if vim.bo.filetype == "neo-tree" or vim.bo.filetype == "neo-tree-popup" then
@@ -61,12 +67,50 @@ local follow_internal = function(callback, force_show, async)
 			return false
 		end
 	end
+
 	local is_in_path = path_to_reveal:sub(1, #state.path) == state.path
 	if not is_in_path then
 		return false
 	end
+
+	-- DEBUG: 以下、再度追加したがどうだ？ 引数の callback, force_show, async が unused になるのを防ぐためだが...
+	log.debug("follow file: ", path_to_reveal)
+	local show_only_explicitly_opened = function()
+		state.explicitly_opened_nodes = state.explicitly_opened_nodes or {}
+		local expanded_nodes = renderer.get_expanded_nodes(state.tree)
+		local state_changed = false
+		for _, id in ipairs(expanded_nodes) do
+			if not state.explicitly_opened_nodes[id] then
+				if path_to_reveal:sub(1, #id) == id then
+					state.explicitly_opened_nodes[id] = state.follow_current_file.leave_dirs_open
+				else
+					local node = state.tree:get_node(id)
+					if node then
+						node:collapse()
+						state_changed = true
+					end
+				end
+			end
+			if state_changed then
+				renderer.redraw(state)
+			end
+		end
+	end
+
+	-- items.get_zk(state, nil, path_to_reveal, function() -- DEBUG: path_to_reveal いらないの？ / nil は root path だ
+	items.get_zk(state, nil, function()
+		show_only_explicitly_opened()
+		renderer.focus_node(state, path_to_reveal, true)
+		if type(callback) == "function" then
+			callback()
+		end
+	end, async)
+	return true
 end
 
+---Follow
+---@param callback function?
+---@param force_show boolean
 M.follow = function(callback, force_show)
 	if vim.fn.bufname(0) == "COMMIT_EDITMSG" then
 		return false
@@ -79,9 +123,8 @@ M.follow = function(callback, force_show)
 	end, 100, utils.debounce_strategy.CALL_LAST_ONLY)
 end
 
-local fs_stat = (vim.uv or vim.loop).fs_stat
-
----@param state neotree.sources.filesystem.State
+---Navigate internal
+---@param state neotree.sources.zk.State
 ---@param path string?
 ---@param path_to_reveal string?
 ---@param callback function?
@@ -102,7 +145,7 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 	-- if path doesn't exist, navigate upwards until it does
 	local orig_path = path
 	local backed_out = false
-	while not fs_stat(path) do
+	while not uv.fs_stat(path) do
 		log.debug(("navigate_internal: path %s didn't exist, going up a directory"):format(path))
 		backed_out = true
 		local parent, _ = utils.split_path(path)
@@ -166,6 +209,7 @@ M.navigate = function(state, path, path_to_reveal, callback, async)
 	end, 100, utils.debounce_strategy.CALL_FIRST_AND_LAST)
 end
 
+---Refresh neo-tree for current source
 M.refresh = utils.wrap(manager.refresh, M.name)
 
 ---Configures the plugin, should be called before the plugin is used.
@@ -302,7 +346,7 @@ M.setup = function(config, global_config)
 			event = events.VIM_BUFFER_ENTER,
 			handler = function(args)
 				if utils.is_real_file(args.afile) then
-					M.follow()
+					M.follow(nil, false)
 				end
 			end,
 		})
