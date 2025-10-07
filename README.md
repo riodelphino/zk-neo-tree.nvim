@@ -50,13 +50,8 @@ require("neo-tree").setup({
 
 ## Defaults
 
-> [!warning]
-> Some filtering features in `filtered_items` are not available.
-> (Because hidden files like `.zk` are not listed by `zk.api.list`)
-
 zk-specific config:
 ```lua
--- FIX: Should remove unavailable config and above warning. or, merge with filesystem items (difficult)
 {
   follow_current_file = {
     enabled = true,
