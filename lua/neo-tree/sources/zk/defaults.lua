@@ -8,14 +8,14 @@ local config = {
 	filtered_items = {
 		always_show = {},
 		always_show_by_pattern = {},
-		hide_dotfiles = true, -- NOT WORKS
-		hide_gitignored = true, -- NOT WORKS
-		hide_hidden = true, -- NOT WORKS
+		hide_dotfiles = true,
+		hide_gitignored = true,
+		hide_hidden = true,
 		hide_by_name = {},
 		hide_by_pattern = {},
 		never_show = {},
 		never_show_by_pattern = {},
-		visible = false, -- NOT WORKS
+		visible = false,
 	},
 	window = {
 		mappings = {
@@ -35,7 +35,7 @@ local config = {
 			return note and note.title or node.name or nil
 		end,
 
-		---Additional customizer for neotree.Render.Node table
+		---Additional customizer for text and highlight table
 		---@param rendere_nodes neotree.Render.Node[]
 		---@param note table? single cached note by zk.api.list
 		---@param node neotree.collections.ListNode
@@ -51,9 +51,9 @@ local config = {
 			-- 1. Sort by directories -> files
 			if a.type ~= b.type then
 				return a.type == "directory"
-         end
+			end
 
-         -- 2. Sort by none-hidden -> hidden
+			-- 2. Sort by none-hidden -> hidden
 			local a_hidden = string.sub(a.name, 1, 1) == "."
 			local b_hidden = string.sub(b.name, 1, 1) == "."
 			if a_hidden ~= b_hidden then
@@ -69,12 +69,12 @@ local config = {
 				return a_has_title
 			end
 
-         -- Sort by title
+			-- Sort by title
 			if a_has_title and b_has_title then
 				return a_title:lower() < b_title:lower()
 			end
 
-         -- Sort by name
+			-- Sort by name
 			return a.name:lower() < b.name:lower()
 		end,
 	},

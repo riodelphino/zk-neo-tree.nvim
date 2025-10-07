@@ -60,15 +60,15 @@ zk-specific config:
   bind_to_cwd = true, -- Follow cwd changes
   enable_git_status = true, -- Show git status markers and highlights
   filtered_items = {
-    always_show = { -- NOT WORKS / remains visible even if other settings would normally hide it
+    always_show = { -- remains visible even if other settings would normally hide it
       --".gitignored",
     },
-    always_show_by_pattern = { -- NOT WORKS / uses glob style patterns
+    always_show_by_pattern = { -- uses glob style patterns
       --".env*",
     },
-    hide_dotfiles = true, -- NOT WORKS
-    hide_gitignored = true, -- NOT WORKS
-    hide_hidden = true, -- NOT WORKS / only works on Windows for hidden files/directories
+    hide_dotfiles = true,
+    hide_gitignored = true,
+    hide_hidden = true, -- only works on Windows for hidden files/directories
     hide_by_name = {
       --"node_modules"
     },
@@ -83,7 +83,7 @@ zk-specific config:
     never_show_by_pattern = { -- uses glob style patterns
       --".null-ls_*",
     },
-    visible = false, -- NOT WORKS / when true, they will just be displayed differently than normal items
+    visible = false, -- when true, they will just be displayed differently than normal items
   },
   window = {
     mappings = {
@@ -96,7 +96,7 @@ zk-specific config:
   },
   extra = {
     -- Scan also none-zk files and directories (e.g. ".zk/", dotfiles, empty directories, "*.jpg", e.t.c.)
-    scan_none_zk_items = true, -- FIX: Should be here or root?
+    scan_none_zk_items = true,
 
     -- The fields fetched by `zk.api.list`
     select = { "absPath", "title"},
@@ -108,12 +108,13 @@ zk-specific config:
       return note and note.title or node.name or nil
     end,
 
-    ---Additional customizer for neotree.Render.Node table
+    ---Additional customizer for text and highlight table
     ---@param rendere_nodes neotree.Render.Node[]
     ---@param note table? single cached note by zk.api.list
     ---@param node neotree.collections.ListNode
     name_extra_renderer = function(rendere_nodes, note, node)
-      -- The given `rendere_nodes` arg is a table: `{ { text = "<title_or_filename>", highlight = "<highlight_name>", } }`
+      -- `rendere_nodes` arg is a table like:
+      -- `{ { text = "<title_or_filename>", highlight = "<highlight_name>", } }`
 
       -- Sample code for adding filename only for zk file
       -- if note and note.title then
@@ -122,48 +123,39 @@ zk-specific config:
       return rendere_nodes
     end,
 
-    ---Default sort function (directory > title > filename)
+    ---Default sort function
     ---@param notes table cached notes by zk.api.list
     ---@param a table
     ---@param b table
     sorter = function(notes, a, b)
+      -- 1. Sort by directories -> files
+      if a.type ~= b.type then
+        return a.type == "directory"
+      end
+
+      -- 2. Sort by none-hidden -> hidden
       local a_hidden = string.sub(a.name, 1, 1) == "."
       local b_hidden = string.sub(b.name, 1, 1) == "."
-
-      -- 1. Directories come first
-      if a.type == "directory" and b.type ~= "directory" then
-        return true
-      elseif a.type ~= "directory" and b.type == "directory" then
-        return false
-      elseif a.type == "directory" and b.type == "directory" then
-        if not a_hidden and b_hidden then -- Sort by none-hidden -> hidden
-          return true
-        elseif a_hidden and not b_hidden then
-          return false
-        end
-        return a.name:lower() < b.name:lower() -- Sort by directory name
+      if a_hidden ~= b_hidden then
+        return not a_hidden
       end
 
-      -- 2. Files with titles come first
-      local a_note = notes[a.path]
-      local b_note = notes[b.path]
-      local a_title = a_note and a_note.title
-      local b_title = b_note and b_note.title
-      if a_title and not b_title then
-        return true
-      elseif not a_title and b_title then
-        return false
-      elseif a_title and b_title then
-        return a_title:lower() < b_title:lower() -- Sort by title
+      -- 3. Sort by titled files -> untitled files
+      local a_title = notes[a.path] and notes[a.path].title
+      local b_title = notes[b.path] and notes[b.path].title
+      local a_has_title = a_title and a_title ~= ""
+      local b_has_title = b_title and b_title ~= ""
+      if a_has_title ~= b_has_title then
+        return a_has_title
       end
 
-      -- 3. Files without titles come last
-      if not a_hidden and b_hidden then -- Sort by none-hidden -> hidden
-        return true
-      elseif a_hidden and not b_hidden then
-        return false
+      -- Sort by title
+      if a_has_title and b_has_title then
+        return a_title:lower() < b_title:lower()
       end
-      return a.name:lower() < b.name:lower() -- Sort by filename
+
+      -- Sort by name
+      return a.name:lower() < b.name:lower()
     end,
   },
 }
