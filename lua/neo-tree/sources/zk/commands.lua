@@ -104,7 +104,7 @@ M.add = function(state)
 	if dir:len() > 0 then
 		dir = dir:sub(2)
 	end
-	local eod = state.explicitly_opened_directories or {} -- FIX: not working: always empty
+	local eod = state.explicitly_opened_nodes or {}
 	vim.ui.input({ prompt = "new note title" }, function(input)
 		if input then
 			local dir_ = vim.fn.fnamemodify(input, ":h")
@@ -126,7 +126,7 @@ M.add = function(state)
 					return
 				end
 				vim.cmd("e " .. res.path)
-				scan(state, function()
+				scan(state, state.path, res.path, function()
 					show_only_explicitly_opened(state, eod, res.path)
 					renderer.focus_node(state, res.path, true)
 				end)
@@ -146,8 +146,8 @@ M.delete = function(state)
 			if err then
 				log.error("Error indexing notes " .. vim.inspect(err))
 			end
-			local eod = state.explicitly_opened_directories or {} -- FIX: not working: always empty
-			scan(state, function()
+			local eod = state.explicitly_opened_nodes or {}
+			scan(state, state.path, nil, function()
 				-- show_only_explicitly_opened(state, eod)
 			end)
 		end)
