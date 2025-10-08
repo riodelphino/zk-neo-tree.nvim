@@ -82,7 +82,6 @@ end
 ---Create a directory recursively
 ---@param path string
 local function mkdir_p(path)
-	local create_all_as_folders -- DEBUG: NEED IT? Can be removed, I guess.
 	function create_all_as_folders(in_path)
 		if not uv.fs_stat(in_path) then
 			local parent, _ = utils.split_path(in_path)
@@ -92,7 +91,6 @@ local function mkdir_p(path)
 			uv.fs_mkdir(in_path, 493)
 		end
 	end
-
 	create_all_as_folders(path)
 end
 

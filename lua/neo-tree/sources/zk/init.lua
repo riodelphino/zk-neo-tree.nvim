@@ -73,7 +73,6 @@ local follow_internal = function(callback, force_show, async)
 		return false
 	end
 
-	-- DEBUG: 以下、再度追加したがどうだ？ 引数の callback, force_show, async が unused になるのを防ぐためだが...
 	log.debug("follow file: ", path_to_reveal)
 	local show_only_explicitly_opened = function()
 		state.explicitly_opened_nodes = state.explicitly_opened_nodes or {}
