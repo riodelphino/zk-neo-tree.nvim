@@ -107,19 +107,19 @@ M.add = function(state)
 	local eod = state.explicitly_opened_nodes or {}
 	vim.ui.input({ prompt = "new note title" }, function(input)
 		if input then
-			local dir_ = vim.fn.fnamemodify(input, ":h")
+			local dir_ = vim.fn.fnamemodify(input, ":h") -- FIX: Is considering 'dir' necessary? 'add_directory' command in filesystem is enough, isn't it?
 			if dir_ ~= "." then
-				if dir == "" then -- DEBUG: ここら辺なにやってるかわからん
+				if dir == "" then
 					dir = dir_
 				else
 					dir = dir .. utils.path_separator .. dir_
 				end
 			end
 			local title = vim.fn.fnamemodify(input, ":t")
-			mkdir_p(state.path .. utils.path_separator .. dir) -- DEBUG: うーん、そうじゃない。title に dir は含めないよ。config.toml を参照しようよ〜
+			mkdir_p(state.path .. utils.path_separator .. dir)
 			require("zk.api").new(state.path, {
 				title = title,
-				dir = dir,
+				dir = dir, -- FIX: Should load and consider 'config.toml', then choose proper template (But is it automatically chosen by the zk.api?)
 			}, function(err, res)
 				if err then
 					log.error("Error querying notes " .. vim.inspect(err))
@@ -148,7 +148,7 @@ M.delete = function(state)
 			end
 			-- local eod = state.explicitly_opened_nodes or {}
 			scan(state, state.path, nil, function()
-				-- show_only_explicitly_opened(state, eod) -- FIX: Tree becomes completely empty
+				-- show_only_explicitly_opened(state, eod) -- INFO: Tree becomes completely empty
 			end)
 		end)
 	end)
