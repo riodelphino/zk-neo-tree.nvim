@@ -107,7 +107,7 @@ M.add = function(state)
 	local eod = state.explicitly_opened_nodes or {}
 	vim.ui.input({ prompt = "new note title" }, function(input)
 		if input then
-			local dir_ = vim.fn.fnamemodify(input, ":h") -- FIX: Is considering 'dir' necessary? 'add_directory' command in filesystem is enough, isn't it?
+			local dir_ = vim.fn.fnamemodify(input, ":h")
 			if dir_ ~= "." then
 				if dir == "" then
 					dir = dir_
@@ -119,7 +119,7 @@ M.add = function(state)
 			mkdir_p(state.path .. utils.path_separator .. dir)
 			require("zk.api").new(state.path, {
 				title = title,
-				dir = dir, -- FIX: Should load and consider 'config.toml', then choose proper template (But is it automatically chosen by the zk.api?)
+				dir = dir,
 			}, function(err, res)
 				if err then
 					log.error("Error querying notes " .. vim.inspect(err))
