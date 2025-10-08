@@ -97,7 +97,8 @@ local follow_internal = function(callback, force_show, async)
 	end
 
 	-- items.get_zk(state, nil, path_to_reveal, function() -- DEBUG: path_to_reveal いらないの？ / nil は root path だ
-	items.get_zk(state, nil, function()
+	-- DEBUG: parent_id は nil でだいじょうぶ？？？
+	items.get_zk(state, nil, path_to_reveal, function()
 		show_only_explicitly_opened()
 		renderer.focus_node(state, path_to_reveal, true)
 		if type(callback) == "function" then
@@ -167,7 +168,7 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 	if path_to_reveal then
 		renderer.position.set(state, path_to_reveal)
 		log.debug("navigate_internal: in path_to_reveal, state.position=", state.position.node_id)
-		items.get_zk(state, path, callback)
+		items.get_zk(state, path, path_to_reveal, callback)
 	else
 		local is_current = state.current_position == "current"
 		local follow_file = state.follow_current_file.enabled
@@ -185,7 +186,7 @@ M._navigate_internal = function(state, path, path_to_reveal, callback, async)
 			else
 				log.trace("navigate_internal: FAILED to save position: ", msg)
 			end
-			items.get_zk(state, path, callback)
+			items.get_zk(state, path, path_to_reveal, callback)
 		end
 	end
 

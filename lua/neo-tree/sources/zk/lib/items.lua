@@ -1,7 +1,9 @@
 local vim = vim
 local uv = vim.uv or vim.loop
+local utils = require("neo-tree.utils")
 local renderer = require("neo-tree.ui.renderer")
 local file_items = require("neo-tree.sources.common.file-items")
+local fs_watch = require("neo-tree.sources.filesystem.lib.fs_watch")
 local log = require("neo-tree.log")
 
 local M = {}
@@ -51,11 +53,11 @@ end
 
 ---Recursively list all files and directories in the path (including hidden and non-Zk items)
 ---@param context neotree.FileItemContext
----@param path string
+---@param parent_id string
 ---@param notes_cache table
 ---@param folders_cache table
-function M.scan_none_zk_items(context, path, notes_cache, folders_cache, root)
-	local handle = uv.fs_scandir(path)
+function M.scan_none_zk_items(context, parent_id, notes_cache, folders_cache, root)
+	local handle = uv.fs_scandir(parent_id)
 	if not handle then
 		return
 	end
@@ -65,7 +67,7 @@ function M.scan_none_zk_items(context, path, notes_cache, folders_cache, root)
 		if not name then
 			break
 		end
-		local fullpath = path .. "/" .. name
+		local fullpath = parent_id .. "/" .. name
 		if not notes_cache[fullpath] then
 			local success, item = pcall(file_items.create_item, context, fullpath, type)
 			if not success then
@@ -86,12 +88,19 @@ end
 
 ---Get zk items and show neo-tree
 ---@param state table neotree.State
+---@param path_to_reveal string?
+---@param parent_id string?
 ---@param callback function?
-function M.scan(state, callback)
-	log.trace("scan: " .. state.path)
+function M.scan(state, parent_id, path_to_reveal, callback)
+	log.trace("scan: " .. tostring(parent_id))
 	state.git_ignored = state.git_ignored or {}
 	state.zk.notes_cache = {}
 	state.zk.folders_cache = {}
+	renderer.acquire_window(state) -- DEBUG: いるこれ？
+
+	if not parent_id then -- DEBUG: 追加してみた。何のため？
+		M.stop_watchers(state)
+	end
 
 	local opts =
 		vim.tbl_extend("error", { select = { "absPath", "title" } }, state.zk.query.query or {})
@@ -104,15 +113,22 @@ function M.scan(state, callback)
 
 		state.zk.notes_cache = index_by_path(notes)
 
-		---@type neotree.FileItemContext
-		local context = file_items.create_context(state)
-
-		---@type neotree.FileItem
-		local root = file_items.create_item(context, state.path, "directory")
-		---@cast root neotree.FileItem.Directory
-		root.id = state.path
+		-- Create context
+		---@type neotree.sources.filesystem.Context
+		local context = file_items.create_context(state) --[[@as neotree.sources.filesystem.Context]]
+		context.state = state
+		context.parent_id = parent_id
+		context.path_to_reveal = path_to_reveal
+		context.recursive = true
+		context.callback = callback
+		-- Create root folder
+		---@type neotree.FileItem.Directory
+		local root = file_items.create_item(context, state.path, "directory") --[[@as neotree.FileItem.Directory]]
+		-- root.id = parent_id or '' -- DEBUG: filesystem には無い一行
 		root.name = vim.fn.fnamemodify(state.path, ":~")
+		root.loaded = true
 		root.search_pattern = state.search_pattern
+		context.root = root
 		context.folders[root.path] = root
 
 		-- Create items for zk notes
@@ -130,12 +146,13 @@ function M.scan(state, callback)
 		end
 
 		-- Set expanded nodes
-		state.default_expanded_nodes = {}
-		for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
-			if opened then
-				table.insert(state.default_expanded_nodes, id)
-			end
-		end
+		-- state.default_expanded_nodes = {} -- DEBUG: ためしにコメントアウト
+		-- for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
+		-- 	if opened then
+		-- 		table.insert(state.default_expanded_nodes, id)
+		-- 	end
+		-- end
+		state.default_expanded_nodes = state.force_open_folders or { state.path } -- DEBUG: 無かったから問題おきそう
 
 		-- Sort
 		local function sorter_wrapper(a, b)
@@ -155,10 +172,12 @@ end
 
 ---An entry point to get zk items
 ---@param state table neotree.State
----@param path string?
-function M.get_zk(state, path, callback)
+---@param parent_id string?
+---@param path_to_reveal string?
+---@param callback function?
+function M.get_zk(state, parent_id, path_to_reveal, callback)
 	-- `state` keeps zk user/default config merged in its root.
-	log.trace("get_zk: ", path)
+	log.trace("get_zk: ", parent_id)
 
 	if state.loading then
 		return
@@ -166,13 +185,40 @@ function M.get_zk(state, path, callback)
 	state.loading = true
 
 	if not state.zk then
-		state.path = resolve_notebook_path(path)
+		state.path = resolve_notebook_path(parent_id)
 		state.zk = {
 			query = default_query,
 		}
 	end
 
-	M.scan(state, callback)
+	M.scan(state, state.path, path_to_reveal, callback)
+end
+
+---@param state neotree.sources.filesystem.State
+M.stop_watchers = function(state)
+	if state.use_libuv_file_watcher and state.tree then
+		-- We are loaded a new root or refreshing, unwatch any folders that were
+		-- previously being watched.
+		local loaded_folders = renderer.select_nodes(state.tree, function(node)
+			return node.type == "directory" and node.loaded
+		end)
+		fs_watch.unwatch_git_index(state.path, require("neo-tree").config.git_status_async)
+		for _, folder in ipairs(loaded_folders) do
+			log.trace("Unwatching folder ", folder.path)
+			if folder.is_link then
+				fs_watch.unwatch_folder(folder.link_to)
+			else
+				fs_watch.unwatch_folder(folder:get_id())
+			end
+		end
+	else
+		log.debug(
+			"Not unwatching folders... use_libuv_file_watcher is ",
+			state.use_libuv_file_watcher,
+			" and state.tree is ",
+			utils.truthy(state.tree)
+		)
+	end
 end
 
 return M
