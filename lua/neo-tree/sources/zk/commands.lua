@@ -146,9 +146,9 @@ M.delete = function(state)
 			if err then
 				log.error("Error indexing notes " .. vim.inspect(err))
 			end
-			local eod = state.explicitly_opened_nodes or {}
+			-- local eod = state.explicitly_opened_nodes or {}
 			scan(state, state.path, nil, function()
-				-- show_only_explicitly_opened(state, eod)
+				-- show_only_explicitly_opened(state, eod) -- FIX: Tree becomes completely empty
 			end)
 		end)
 	end)

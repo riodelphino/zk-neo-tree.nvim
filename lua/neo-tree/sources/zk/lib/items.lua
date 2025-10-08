@@ -1,10 +1,7 @@
 local vim = vim
 local uv = vim.uv or vim.loop
-local utils = require("neo-tree.utils")
 local renderer = require("neo-tree.ui.renderer")
 local file_items = require("neo-tree.sources.common.file-items")
-local fs_watch = require("neo-tree.sources.filesystem.lib.fs_watch")
-local events = require("neo-tree.events")
 local log = require("neo-tree.log")
 
 local M = {}
