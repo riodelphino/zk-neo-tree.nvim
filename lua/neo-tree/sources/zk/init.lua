@@ -96,8 +96,6 @@ local follow_internal = function(callback, force_show, async)
 		end
 	end
 
-	-- items.get_zk(state, nil, path_to_reveal, function() -- DEBUG: path_to_reveal いらないの？ / nil は root path だ
-	-- DEBUG: parent_id は nil でだいじょうぶ？？？
 	items.get_zk(state, nil, path_to_reveal, function()
 		show_only_explicitly_opened()
 		renderer.focus_node(state, path_to_reveal, true)

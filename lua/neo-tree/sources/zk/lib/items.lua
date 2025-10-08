@@ -4,6 +4,7 @@ local utils = require("neo-tree.utils")
 local renderer = require("neo-tree.ui.renderer")
 local file_items = require("neo-tree.sources.common.file-items")
 local fs_watch = require("neo-tree.sources.filesystem.lib.fs_watch")
+local events = require("neo-tree.events")
 local log = require("neo-tree.log")
 
 local M = {}
@@ -12,6 +13,38 @@ local default_query = {
 	desc = "All",
 	query = {},
 }
+
+-- DEBUG: いらないんじゃ？
+-- ---@param context neotree.sources.filesystem.Context
+-- ---@param dir_path string
+-- local on_directory_loaded = function(context, dir_path)
+-- 	local state = context.state
+-- 	local scanned_folder = context.folders[dir_path]
+-- 	if scanned_folder then
+-- 		scanned_folder.loaded = true
+-- 	end
+-- 	if state.use_libuv_file_watcher then
+-- 		local root = context.folders[dir_path]
+-- 		if root then
+-- 			local target_path = root.is_link and root.link_to or root.path
+-- 			local fs_watch_callback = vim.schedule_wrap(function(err, fname)
+-- 				if err then
+-- 					log.error("file_event_callback: ", err)
+-- 					return
+-- 				end
+-- 				if context.is_a_never_show_file(fname) then
+-- 					-- don't fire events for nodes that are designated as "never show"
+-- 					return
+-- 				else
+-- 					events.fire_event(events.FS_EVENT, { afile = target_path })
+-- 				end
+-- 			end)
+--
+-- 			log.trace("Adding fs watcher for ", target_path)
+-- 			fs_watch.watch_folder(target_path, fs_watch_callback)
+-- 		end
+-- 	end
+-- end
 
 ---Get notebook root directory from a path
 ---@param path string?
@@ -96,11 +129,12 @@ function M.scan(state, parent_id, path_to_reveal, callback)
 	state.git_ignored = state.git_ignored or {}
 	state.zk.notes_cache = {}
 	state.zk.folders_cache = {}
-	renderer.acquire_window(state) -- DEBUG: いるこれ？
+	renderer.acquire_window(state)
 
-	if not parent_id then -- DEBUG: 追加してみた。何のため？
-		M.stop_watchers(state)
-	end
+	-- DEBUG: いらなくね？
+	-- if not parent_id then
+	-- 	M.stop_watchers(state)
+	-- end
 
 	local opts =
 		vim.tbl_extend("error", { select = { "absPath", "title" } }, state.zk.query.query or {})
@@ -121,15 +155,18 @@ function M.scan(state, parent_id, path_to_reveal, callback)
 		context.path_to_reveal = path_to_reveal
 		context.recursive = true
 		context.callback = callback
+
 		-- Create root folder
 		---@type neotree.FileItem.Directory
 		local root = file_items.create_item(context, state.path, "directory") --[[@as neotree.FileItem.Directory]]
-		-- root.id = parent_id or '' -- DEBUG: filesystem には無い一行
 		root.name = vim.fn.fnamemodify(state.path, ":~")
 		root.loaded = true
 		root.search_pattern = state.search_pattern
 		context.root = root
 		context.folders[root.path] = root
+
+		-- Set expanded nodes
+		state.default_expanded_nodes = state.force_open_folders or { state.path }
 
 		-- Create items for zk notes
 		for _, note in pairs(notes) do
@@ -145,21 +182,14 @@ function M.scan(state, parent_id, path_to_reveal, callback)
 			M.scan_none_zk_items(context, state.path, state.zk.notes_cache, state.zk.folders_cache, root)
 		end
 
-		-- Set expanded nodes
-		-- state.default_expanded_nodes = {} -- DEBUG: ためしにコメントアウト
-		-- for id, opened in ipairs(state.explicitly_opened_nodes or {}) do
-		-- 	if opened then
-		-- 		table.insert(state.default_expanded_nodes, id)
-		-- 	end
-		-- end
-		state.default_expanded_nodes = state.force_open_folders or { state.path } -- DEBUG: 無かったから問題おきそう
-
-		-- Sort
+		-- Register a sorter function
 		local function sorter_wrapper(a, b)
 			return state.extra.sorter(state.zk.notes_cache, a, b) -- Wrap sorter to access notes_cache
 		end
-		-- state.sort_function_override = state.zk.sorter
 		file_items.deep_sort(root.children, sorter_wrapper)
+		-- *** Another way to register a sorter function? ***
+		-- state.sort_function_override = state.zk.sorter
+		-- file_items.deep_sort(root.children, nil)
 
 		renderer.show_nodes({ root }, state, nil, function()
 			state.loading = false
@@ -194,31 +224,32 @@ function M.get_zk(state, parent_id, path_to_reveal, callback)
 	M.scan(state, state.path, path_to_reveal, callback)
 end
 
----@param state neotree.sources.filesystem.State
-M.stop_watchers = function(state)
-	if state.use_libuv_file_watcher and state.tree then
-		-- We are loaded a new root or refreshing, unwatch any folders that were
-		-- previously being watched.
-		local loaded_folders = renderer.select_nodes(state.tree, function(node)
-			return node.type == "directory" and node.loaded
-		end)
-		fs_watch.unwatch_git_index(state.path, require("neo-tree").config.git_status_async)
-		for _, folder in ipairs(loaded_folders) do
-			log.trace("Unwatching folder ", folder.path)
-			if folder.is_link then
-				fs_watch.unwatch_folder(folder.link_to)
-			else
-				fs_watch.unwatch_folder(folder:get_id())
-			end
-		end
-	else
-		log.debug(
-			"Not unwatching folders... use_libuv_file_watcher is ",
-			state.use_libuv_file_watcher,
-			" and state.tree is ",
-			utils.truthy(state.tree)
-		)
-	end
-end
+-- DEBUG: いらなくね？
+-- ---@param state neotree.sources.filesystem.State
+-- M.stop_watchers = function(state)
+-- 	if state.use_libuv_file_watcher and state.tree then
+-- 		-- We are loaded a new root or refreshing, unwatch any folders that were
+-- 		-- previously being watched.
+-- 		local loaded_folders = renderer.select_nodes(state.tree, function(node)
+-- 			return node.type == "directory" and node.loaded
+-- 		end)
+-- 		fs_watch.unwatch_git_index(state.path, require("neo-tree").config.git_status_async)
+-- 		for _, folder in ipairs(loaded_folders) do
+-- 			log.trace("Unwatching folder ", folder.path)
+-- 			if folder.is_link then
+-- 				fs_watch.unwatch_folder(folder.link_to)
+-- 			else
+-- 				fs_watch.unwatch_folder(folder:get_id())
+-- 			end
+-- 		end
+-- 	else
+-- 		log.debug(
+-- 			"Not unwatching folders... use_libuv_file_watcher is ",
+-- 			state.use_libuv_file_watcher,
+-- 			" and state.tree is ",
+-- 			utils.truthy(state.tree)
+-- 		)
+-- 	end
+-- end
 
 return M
