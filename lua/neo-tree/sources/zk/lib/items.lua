@@ -130,11 +130,14 @@ function M.scan(state, parent_id, path_to_reveal, callback)
 
 		-- Create items for zk notes
 		for _, note in pairs(notes) do
-			local success, item = pcall(file_items.create_item, context, note.absPath, "file")
-			if not success then
-				log.error("Error creating item for " .. note.absPath .. ": " .. item)
+			local stat = uv.fs_stat(note.absPath)
+			if stat then
+				local success, item = pcall(file_items.create_item, context, note.absPath, "file")
+				if not success then
+					log.error("Error creating item for " .. note.absPath .. ": " .. item)
+				end
+				state.zk.folders_cache[item.parent_path] = true
 			end
-			state.zk.folders_cache[item.parent_path] = true
 		end
 
 		-- Create items for none-zk files and directories

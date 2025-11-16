@@ -203,12 +203,23 @@ M.navigate = function(state, path, path_to_reveal, callback, async)
 	state.dirty = false
 	log.trace("navigate", path, path_to_reveal, async)
 	utils.debounce("filesystem_navigate", function()
-		M._navigate_internal(state, path, path_to_reveal, callback, async)
+		-- DEBUG: items.scan() では ＜extra フィールド？ state.zk ？が無い＞だかのエラー
+		items.get_zk(state, path, path_to_reveal, function()
+			M._navigate_internal(state, path, path_to_reveal, callback, async)
+		end)
 	end, 100, utils.debounce_strategy.CALL_FIRST_AND_LAST)
 end
 
 ---Refresh neo-tree for current source
-M.refresh = utils.wrap(manager.refresh, M.name)
+-- M.refresh = utils.wrap(manager.refresh, M.name) -- DEBUG: ここでは get_zk 挟まないと、移動時に反映されない (でも get_zk の引数がもらえない)
+M.refresh = function()
+	local state = get_state()
+	local path_to_reveal = nil
+	items.get_zk(state, state.path, path_to_reveal, function()
+		vim.notify("⭐️ refresh 中だよーん", vim.log.levels.INFO, { title = "neo-tree-zk" }) -- DEBUG:
+		utils.wrap(manager.refresh, M.name)
+	end)
+end
 
 ---Configures the plugin, should be called before the plugin is used.
 ---@param config neotree.Config.Filesystem source specific options in `{ zk = { ... } }`
