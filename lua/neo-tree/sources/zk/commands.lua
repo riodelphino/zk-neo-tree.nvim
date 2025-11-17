@@ -171,6 +171,8 @@ M.toggle_gitignore = function(state)
 	M.toggle_hidden(state)
 end
 
-M = vim.tbl_deep_extend("keep", M, fs_commands) -- Also including 'common.commands'
+-- Include `filesystem` and `common` commands.
+-- Merged at last to suppress duplicate warnings. Above same name functions will be retained by `keep` arg.
+M = vim.tbl_deep_extend("keep", M, fs_commands)
 
 return M
