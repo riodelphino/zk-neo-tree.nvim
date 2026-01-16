@@ -1,6 +1,8 @@
 # zk-neo-tree.nvim
 
-An extention for [zk-nvim](https://github.com/zk-org/zk-nvim) that add [neo-tree](https://github.com/nvim-neo-tree/neo-tree.nvim) ZK source.
+An extention for [zk-nvim](https://github.com/zk-org/zk-nvim) that add ZK source to [neo-tree](https://github.com/nvim-neo-tree/neo-tree.nvim).
+
+Forked from [zk-org/neo-tree-zk.nvim](https://github.com/zk-org/neo-tree-zk.nvim). (unmaintained since 2022)
 
 
 ## Installation
@@ -167,4 +169,13 @@ zk-specific config:
 From you zk directory, call `:Neotree source=zk` or `:Neotree zk`.
 
 Then use the 'change_query' command (`z`) to see notes belonging to the selected query.
+
+
+## Related
+
+- [zk-org/zk](https://github.com/zk-org/zk)
+- [zk-org/zk-nvim](https://github.com/zk-org/zk-nvim)
+- [nvim-neo-tree/neo-tree](https://github.com/nvim-neo-tree/neo-tree.nvim)
+- [zk-org/neo-tree-zk.nvim](https://github.com/zk-org/neo-tree-zk.nvim) (unmaintained since 2022)
+- [riodelphino/zk-snacks-explorer.nvim](https://github.com/riodelphino/zk-snacks-explorer.nvim)
 
