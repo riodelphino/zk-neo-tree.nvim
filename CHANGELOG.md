@@ -5,4 +5,5 @@
 
 * **fix:** Upstream sync with current neo-tree.nvim version
 * **doc:** Add CHANGELOG.md
+* **doc:** Change repository name & URL
 

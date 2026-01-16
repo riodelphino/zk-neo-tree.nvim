@@ -1,6 +1,7 @@
-# Neo-tree-zk
+# zk-neo-tree.nvim
 
-A [neo-tree](https://github.com/nvim-neo-tree/neo-tree.nvim) source for [zk-nvim](https://github.com/mickael-menu/zk-nvim).
+An extention for [zk-nvim](https://github.com/zk-org/zk-nvim) that add [neo-tree](https://github.com/nvim-neo-tree/neo-tree.nvim) ZK source.
+
 
 ## Installation
 
@@ -8,10 +9,10 @@ Via [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
 {
-  "zk-org/neo-tree-zk.nvim",
+  "riodelphino/zk-neo-tree.nvim",
   requires = {
-    "nvim-neo-tree/neo-tree.nvim",
     "zk-org/zk-nvim"
+    "nvim-neo-tree/neo-tree.nvim",
   },
 }
 ```
@@ -19,10 +20,10 @@ Via [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
 ```lua
 use {
-  "zk-org/neo-tree-zk.nvim",
+  "riodelphino/zk-neo-tree.nvim",
   requires = {
-    "nvim-neo-tree/neo-tree.nvim",
     "zk-org/zk-nvim"
+    "nvim-neo-tree/neo-tree.nvim",
   },
 }
 ```
@@ -166,3 +167,4 @@ zk-specific config:
 From you zk directory, call `:Neotree source=zk` or `:Neotree zk`.
 
 Then use the 'change_query' command (`n`) to see notes belonging to the selected query.
+
