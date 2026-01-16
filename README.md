@@ -171,6 +171,12 @@ From you zk directory, call `:Neotree source=zk` or `:Neotree zk`.
 Then use the 'change_query' command (`z`) to see notes belonging to the selected query.
 
 
+## Issues
+
+- [ ] The sort by ZK note title is incorrect at first load. (-> it's correct when reopened.)
+- [ ] `z` key waits for `zz`. (-> Disable `zz` keymap.)
+
+
 ## Related
 
 - [zk-org/zk](https://github.com/zk-org/zk)
