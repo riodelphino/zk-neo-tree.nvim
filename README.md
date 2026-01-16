@@ -89,7 +89,7 @@ zk-specific config:
   window = {
     mappings = {
       -- zk source
-      ["n"] = "change_query",
+      ["z"] = "change_query",
 
       -- filesystem commands are also available
       -- (e.g. ["H"] = "toggle_hidden", )
@@ -166,5 +166,5 @@ zk-specific config:
 
 From you zk directory, call `:Neotree source=zk` or `:Neotree zk`.
 
-Then use the 'change_query' command (`n`) to see notes belonging to the selected query.
+Then use the 'change_query' command (`z`) to see notes belonging to the selected query.
 

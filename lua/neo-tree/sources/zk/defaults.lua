@@ -19,7 +19,7 @@ local config = {
 	},
 	window = {
 		mappings = {
-			["n"] = "change_query",
+			["z"] = "change_query",
 		},
 	},
 	extra = {
